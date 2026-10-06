@@ -1,4 +1,5 @@
-const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co"; // Yahan Data API se copy kiya URL paste karein
-const SUPABASE_ANON_KEY = "eyJh...";                       // Yahan API Keys se copy ki hui key paste karein
+// js/supabaseClient.js
+const SUPABASE_URL = "https://ouytchaokxqaajbtzuoh.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_KRpxfBt-LHVYinugaJZZHA_Nf6bMrCB";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
