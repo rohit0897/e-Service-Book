@@ -203,8 +203,6 @@ function handleDeleteSelectedFromSelection() {
   );
 }
 
-function saveEmployees() {
-  // LocalStorage backup ke saath Supabase Cloud par data sync karega
 async function saveEmployees() {
   // 1. Browser backup
   localStorage.setItem('cpo_delhi_employees_v8_3', JSON.stringify(employees));
@@ -250,6 +248,10 @@ async function saveEmployees() {
       }
     }
   } catch (err) {
+    console.error("Supabase Network Sync Failed:", err);
+  }
+}  
+    catch (err) {
     console.error("Supabase Network Sync Failed:", err);
   }
 }
