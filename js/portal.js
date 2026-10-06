@@ -637,10 +637,6 @@ async function handleAddEventSubmit(e) {
   const effDate = document.getElementById('eventFormDate').value;
 
   let updatedPayMsg = "";
-  
-  // Future reversal ke liye purani values ka snapshot
-  const prevBasic = Number(activeEmployeeForEvents.basicPay) || 0;
-  const prevIncDue = activeEmployeeForEvents.incrementDue || '';
 
   if (eventType === 'Annual Increment') {
     const nextBasic = Number(document.getElementById('eventNextBasicPay').value);
@@ -661,10 +657,7 @@ async function handleAddEventSubmit(e) {
     type: eventType,
     orderNo: orderNo,
     description: desc,
-    authority: authority,
-    status: 'active',
-    previousBasicPay: prevBasic,
-    previousIncrementDue: prevIncDue
+    authority: authority
   };
 
   if (!activeEmployeeForEvents.events) activeEmployeeForEvents.events = [];
@@ -686,43 +679,12 @@ async function handleAddEventSubmit(e) {
 
 async function deleteServiceEvent(eventId) {
   if (!activeEmployeeForEvents) return;
-  const targetEvent = (activeEmployeeForEvents.events || []).find(e => e.id === eventId);
-  if (!targetEvent) return;
+  if (!confirm("Are you sure you want to delete this service book event log?")) return;
 
-  if (targetEvent.status === 'cancelled') {
-    showToast("Yeh event pehle se hi cancelled hai.", "info");
-    return;
-  }
-
-  const confirmReason = prompt(
-    "Kya aap sach me is event ko Cancel / Reverse karna chahte hain? Event record me strikethrough dikhega aur details reverse ho jayengi.\n\nCancellation ka kaaran (Order/Remarks) likhein:",
-    "Cancelled vide Estt Order"
-  );
-
-  if (confirmReason === null) return;
-
-  // 1. Agar Annual Increment tha to Basic Pay aur Increment Due purani value par reverse karein
-  if (targetEvent.type === 'Annual Increment') {
-    if (targetEvent.previousBasicPay) {
-      activeEmployeeForEvents.basicPay = targetEvent.previousBasicPay;
-    }
-    if (targetEvent.previousIncrementDue) {
-      activeEmployeeForEvents.incrementDue = targetEvent.previousIncrementDue;
-    }
-  }
-
-  // 2. Event ko delete na karke 'cancelled' status mark karein taaki audit trail dikhe
-  targetEvent.status = 'cancelled';
-  targetEvent.cancellationReason = confirmReason.trim() || "Withdrawn / Cancelled";
-  targetEvent.cancelledAt = new Date().toISOString().split('T')[0];
-
+  activeEmployeeForEvents.events = activeEmployeeForEvents.events.filter(e => e.id !== eventId);
   await saveEmployees();
   renderEventsTimelineList();
-
-  // Modal ke header text ko bhi updated/reversed Basic Pay ke sath refresh karein
-  document.getElementById('eventsModalSub').innerText = `${activeEmployeeForEvents.name} (${activeEmployeeForEvents.id}) • Basic Pay: ₹${Number(activeEmployeeForEvents.basicPay || 0).toLocaleString('en-IN')} • Next Inc: ${activeEmployeeForEvents.incrementDue || '--'}`;
-
-  showToast("Event cancelled aur details successfully purani value par reverse ho gayi hain!", "success");
+  showToast("Service event removed.", "info");
 }
 
 function renderEventsTimelineList() {
@@ -735,47 +697,26 @@ function renderEventsTimelineList() {
     return;
   }
 
-  container.innerHTML = events.map(evt => {
-    const isCancelled = evt.status === 'cancelled';
-    
-    return `
-      <div class="p-3 bg-white rounded-lg border-2 ${isCancelled ? 'border-rose-400 bg-rose-50/50 opacity-80' : 'border-slate-200'} shadow-xs relative">
-        <div class="flex justify-between items-start">
-          <div class="flex items-center space-x-2">
-            <span class="px-2 py-0.5 rounded text-[10px] font-black ${isCancelled ? 'bg-rose-200 text-rose-950 border border-rose-300' : 'bg-amber-100 text-amber-950 border border-amber-300'}">
-              ${evt.type}
-            </span>
-            <span class="text-xs font-mono font-bold text-gov-navy">${formatDate(evt.date)}</span>
-            ${isCancelled ? '<span class="px-2 py-0.2 rounded text-[10px] font-black bg-rose-600 text-white tracking-wider">CANCELLED / WITHDRAWN</span>' : ''}
-          </div>
-          ${!isCancelled ? `
-            <button onclick="deleteServiceEvent('${evt.id}')" title="Cancel & Reverse this Event" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 font-bold border border-rose-200">
-              <i class="fa-solid fa-ban mr-1"></i> Cancel Event
-            </button>
-          ` : `
-            <span class="text-[11px] font-bold text-rose-700 italic">
-              Reversed on ${formatDate(evt.cancelledAt)}
-            </span>
-          `}
+  container.innerHTML = events.map(evt => `
+    <div class="p-3 bg-white rounded-lg border-2 border-slate-200 shadow-xs relative">
+      <div class="flex justify-between items-start">
+        <div class="flex items-center space-x-2">
+          <span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-950 border border-amber-300">
+            ${evt.type}
+          </span>
+          <span class="text-xs font-mono font-bold text-gov-navy">${formatDate(evt.date)}</span>
         </div>
-
-        <p class="text-xs ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'} font-bold mt-1.5 leading-relaxed">
-          ${evt.description}
-        </p>
-
-        ${isCancelled ? `
-          <div class="mt-1.5 p-1.5 bg-rose-100 border border-rose-300 rounded text-[11px] text-rose-900 font-semibold">
-            <strong>Cancellation Remark:</strong> ${evt.cancellationReason}
-          </div>
-        ` : ''}
-
-        <div class="mt-2 pt-2 border-t border-slate-200 flex flex-wrap justify-between items-center text-[11px] text-slate-700 font-semibold">
-          <span><strong>Order:</strong> ${evt.orderNo}</span>
-          <span><strong>Attested by:</strong> ${evt.authority}</span>
-        </div>
+        <button onclick="deleteServiceEvent('${evt.id}')" title="Delete Event" class="text-rose-600 hover:text-rose-800 text-xs p-1 font-bold">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
       </div>
-    `;
-  }).join('');
+      <p class="text-xs text-slate-900 font-bold mt-1.5 leading-relaxed">${evt.description}</p>
+      <div class="mt-2 pt-2 border-t border-slate-200 flex flex-wrap justify-between items-center text-[11px] text-slate-700 font-semibold">
+        <span><strong>Order:</strong> ${evt.orderNo}</span>
+        <span><strong>Attested by:</strong> ${evt.authority}</span>
+      </div>
+    </div>
+  `).join('');
 }
 
 function openLeaveModal(index) {
@@ -1237,21 +1178,14 @@ function printSingleEmployee(emp) {
           </tr>
         </thead>
         <tbody>
-          ${emp.events.map(ev => {
-            const isCancelled = ev.status === 'cancelled';
-            return `
-            <tr style="${isCancelled ? 'background-color: #ffe4e6; text-decoration: line-through; color: #9f1239;' : ''}">
+          ${emp.events.map(ev => `
+            <tr>
               <td style="border: 1px solid #cbd5e1; padding: 6px;">${formatDate(ev.date)}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
-                ${ev.type}${isCancelled ? '(CANCELLED)' : ''}
-              </td>
+              <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${ev.type}</td>
               <td style="border: 1px solid #cbd5e1; padding: 6px;">${ev.orderNo}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 6px;">
-                ${ev.description}${isCancelled ? `<br><small style="color: #be123c;">[Reason: ${ev.cancellationReason || 'Withdrawn'}]</small>` : ''}
-              </td>
+              <td style="border: 1px solid #cbd5e1; padding: 6px;">${ev.description}</td>
             </tr>
-          `;
-          }).join('')}
+          `).join('')}
         </tbody>
       </table>
     `;
@@ -1376,32 +1310,21 @@ function renderEmployeeDashboard() {
   if (events.length === 0) {
     eventsContainer.innerHTML = `<p class="text-xs text-slate-700 font-bold p-3 bg-slate-50 rounded border border-slate-200">No official service events recorded in your e-Service Book yet.</p>`;
   } else {
-    eventsContainer.innerHTML = events.map(ev => {
-      const isCancelled = ev.status === 'cancelled';
-      return `
-        <div class="p-3 bg-white rounded-lg border-2 ${isCancelled ? 'border-rose-300 bg-rose-50/40 opacity-80' : 'border-slate-200'}">
-          <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-black ${isCancelled ? 'bg-rose-200 text-rose-950 border border-rose-300' : 'bg-amber-100 text-amber-950 border border-amber-300'}">
-                ${ev.type}
-              </span>
-              ${isCancelled ? '<span class="px-2 py-0.2 rounded text-[10px] font-black bg-rose-600 text-white tracking-wider">CANCELLED / WITHDRAWN</span>' : ''}
-            </div>
-            <span class="text-xs font-mono font-black text-gov-navy">${formatDate(ev.date)}</span>
-          </div>
-          <p class="text-xs ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'} font-bold mt-1.5">${ev.description}</p>
-          ${isCancelled ? `
-            <div class="mt-1 text-[11px] text-rose-800 font-semibold italic">
-              <strong>Order Remark:</strong> ${ev.cancellationReason || 'Withdrawn / Cancelled'}
-            </div>
-          ` : ''}
-          <div class="mt-2 pt-2 border-t border-slate-200 text-xs font-bold text-slate-600 flex justify-between items-center">
-            <span><strong>Order Ref:</strong> ${ev.orderNo}</span>
-            <span><strong>Attesting Office:</strong> ${ev.authority}</span>
-          </div>
+    eventsContainer.innerHTML = events.map(ev => `
+      <div class="p-3 bg-white rounded-lg border-2 border-slate-200">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-950 border border-amber-300">
+            ${ev.type}
+          </span>
+          <span class="text-xs font-mono font-black text-gov-navy">${formatDate(ev.date)}</span>
         </div>
-      `;
-    }).join('');
+        <p class="text-xs text-slate-900 font-bold mt-1.5">${ev.description}</p>
+        <div class="mt-2 pt-2 border-t border-slate-200 text-xs font-bold text-slate-600 flex justify-between items-center">
+          <span><strong>Order Ref:</strong> ${ev.orderNo}</span>
+          <span><strong>Attesting Office:</strong> ${ev.authority}</span>
+        </div>
+      </div>
+    `).join('');
   }
 }
 
@@ -1554,4 +1477,3 @@ async function deleteEmployeeFromSupabase(empIds) {
     console.error("Supabase Delete Error:", err);
   }
 }
-```[cite: 5, 8]
