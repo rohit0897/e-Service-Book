@@ -204,7 +204,11 @@ function handleDeleteSelectedFromSelection() {
 }
 
 function saveEmployees() {
+  // LocalStorage backup ke saath Supabase Cloud par data sync karega
+async function saveEmployees() {
+  // 1. Browser backup
   localStorage.setItem('cpo_delhi_employees_v8_3', JSON.stringify(employees));
+  
   if (currentAuth.isLoggedIn && currentAuth.role === 'employee' && currentAuth.userData) {
     const fresh = employees.find(e => e.id === currentAuth.userData.id);
     if (fresh) {
@@ -212,6 +216,43 @@ function saveEmployees() {
       sessionStorage.setItem('cpo_delhi_session', JSON.stringify(currentAuth));
     }
   }
+
+  // 2. Supabase Cloud Database Sync
+  try {
+    if (typeof supabaseClient !== 'undefined') {
+      const recordsToSync = employees.map(emp => ({
+        id: emp.id,
+        name: emp.name,
+        dob: emp.dob,
+        father_name: emp.fatherName,
+        mother_name: emp.motherName,
+        designation: emp.designation,
+        group: emp.group,
+        pay_level: emp.payLevel,
+        basic_pay: emp.basicPay,
+        doj: emp.doj,
+        dor: emp.dor,
+        increment_due: emp.incrementDue,
+        phone: emp.phone,
+        email: emp.email,
+        password: emp.password || 'pass123',
+        events: emp.events || [],
+        leave_ledger: emp.leaveLedger || [],
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error } = await supabaseClient
+        .from('employees')
+        .upsert(recordsToSync, { onConflict: 'id' });
+
+      if (error) {
+        console.error("Supabase Save Error:", error);
+      }
+    }
+  } catch (err) {
+    console.error("Supabase Network Sync Failed:", err);
+  }
+}
 }
 
 function saveStations() {
@@ -1426,4 +1467,14 @@ function requestDeletePskModal(idx) {
   if (!st) return;
 
   openSecurityWarningModal('DELETE_PSK', { idx, name: st.name }, `WARNING: You are requesting the official decommissioning and removal of "${st.name}" (${st.code}).`);
+}
+// Supabase se permanently delete karne ke liye
+async function deleteEmployeeFromSupabase(empIds) {
+  try {
+    if (typeof supabaseClient !== 'undefined') {
+      await supabaseClient.from('employees').delete().in('id', empIds);
+    }
+  } catch (err) {
+    console.error("Supabase Delete Error:", err);
+  }
 }
