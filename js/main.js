@@ -98,9 +98,10 @@ async function initializeData() {
   let cloudLoaded = false;
 
   // 1. Supabase Cloud se load karein
-  if (typeof supabaseClient !== 'undefined') {
+  const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+  if (client) {
     try {
-      const { data, error } = await supabaseClient
+      const { data, error } = await client
         .from('employees')
         .select('*')
         .order('id', { ascending: true });
