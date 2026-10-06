@@ -95,18 +95,93 @@ function navigateTo(viewName) {
 function initializeData() {
   startLiveClock();
 
-  const storedEmp = localStorage.getItem('cpo_delhi_employees_v8_3');
-  if (storedEmp) {
+  let cloudLoaded = false;
+
+  // 1. Supabase Cloud se latest employees load karein
+  if (typeof supabaseClient !== 'undefined') {
     try {
-      employees = JSON.parse(storedEmp);
+      const { data, error } = await supabaseClient
+        .from('employees')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        employees = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          dob: item.dob,
+          fatherName: item.father_name,
+          motherName: item.mother_name,
+          designation: item.designation,
+          group: item.group,
+          payLevel: item.pay_level,
+          basicPay: Number(item.basic_pay),
+          doj: item.doj,
+          dor: item.dor,
+          incrementDue: item.increment_due,
+          phone: item.phone,
+          email: item.email,
+          password: item.password || 'pass123',
+          events: item.events || [],
+          leaveLedger: item.leave_ledger || []
+        }));
+        cloudLoaded = true;
+      }
     } catch (e) {
+      console.warn("Cloud connection error, falling back to local data", e);
+    }
+  }
+
+  // 2. Agar Supabase par abhi data nahi hai, to local storage ya default load karein
+  if (!cloudLoaded) {
+    const storedEmp = localStorage.getItem('cpo_delhi_employees_v8_3');
+    if (storedEmp) {
+      try {
+        employees = JSON.parse(storedEmp);
+      } catch (e) {
+        employees = [...DEFAULT_EMPLOYEES];
+      }
+    } else {
       employees = [...DEFAULT_EMPLOYEES];
-      saveEmployees();
+    }
+    // Pehli baar run hone par default data Supabase cloud par sync kar dein
+    await saveEmployees();
+  }
+
+  // Stations load logic
+  const storedStations = localStorage.getItem('cpo_delhi_stations');
+  if (storedStations) {
+    try {
+      stations = JSON.parse(storedStations);
+    } catch (e) {
+      stations = [...DEFAULT_STATIONS];
+      saveStations();
     }
   } else {
-    employees = [...DEFAULT_EMPLOYEES];
-    saveEmployees();
+    stations = [...DEFAULT_STATIONS];
+    saveStations();
   }
+
+  // Session check
+  const savedSession = sessionStorage.getItem('cpo_delhi_session');
+  if (savedSession) {
+    try {
+      currentAuth = JSON.parse(savedSession);
+      if (currentAuth.isLoggedIn && currentAuth.role === 'employee' && currentAuth.userData) {
+        const fresh = employees.find(e => e.id === currentAuth.userData.id);
+        if (fresh) currentAuth.userData = fresh;
+      }
+    } catch (e) {
+      currentAuth = { isLoggedIn: false, role: null, userData: null };
+    }
+  }
+
+  updateUIAuthState();
+  renderPskListTable();
+  if (document.getElementById('view-admin') && !document.getElementById('view-admin').classList.contains('hidden')) {
+    applyTableFilters();
+  }
+}
 
   const defaultIncrements = getUpcomingIncrementOptions();
   employees.forEach((emp, i) => {
