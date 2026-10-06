@@ -92,12 +92,12 @@ function navigateTo(viewName) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function initializeData() {
+async function initializeData() {
   startLiveClock();
 
   let cloudLoaded = false;
 
-  // 1. Supabase Cloud se latest employees load karein
+  // 1. Supabase Cloud se load karein
   if (typeof supabaseClient !== 'undefined') {
     try {
       const { data, error } = await supabaseClient
@@ -132,7 +132,7 @@ function initializeData() {
     }
   }
 
-  // 2. Agar Supabase par abhi data nahi hai, to local storage ya default load karein
+  // 2. Agar Cloud pe data na ho, local storage ya default fallback
   if (!cloudLoaded) {
     const storedEmp = localStorage.getItem('cpo_delhi_employees_v8_3');
     if (storedEmp) {
@@ -144,11 +144,22 @@ function initializeData() {
     } else {
       employees = [...DEFAULT_EMPLOYEES];
     }
-    // Pehli baar run hone par default data Supabase cloud par sync kar dein
     await saveEmployees();
   }
 
-  // Stations load logic
+  // Default fields verify karein
+  const defaultIncrements = getUpcomingIncrementOptions();
+  employees.forEach((emp, i) => {
+    if (!emp.events) emp.events = [];
+    if (!emp.leaveLedger) emp.leaveLedger = [];
+    if (!emp.password) emp.password = "pass123";
+    if (!emp.incrementDue) {
+      emp.incrementDue = defaultIncrements[i % 2];
+    }
+    emp.leaveLedger = emp.leaveLedger.filter(l => ['EL', 'HPL', 'CCL'].includes(l.type));
+  });
+
+  // Stations setup
   const storedStations = localStorage.getItem('cpo_delhi_stations');
   if (storedStations) {
     try {
@@ -183,48 +194,7 @@ function initializeData() {
   }
 }
 
-  const defaultIncrements = getUpcomingIncrementOptions();
-  employees.forEach((emp, i) => {
-    if (!emp.events) emp.events = [];
-    if (!emp.leaveLedger) emp.leaveLedger = [];
-    if (!emp.password) emp.password = "pass123";
-    if (!emp.incrementDue) {
-      emp.incrementDue = defaultIncrements[i % 2];
-    }
-    emp.leaveLedger = emp.leaveLedger.filter(l => ['EL', 'HPL', 'CCL'].includes(l.type));
-  });
-
-  const storedStations = localStorage.getItem('cpo_delhi_stations');
-  if (storedStations) {
-    try {
-      stations = JSON.parse(storedStations);
-    } catch (e) {
-      stations = [...DEFAULT_STATIONS];
-      saveStations();
-    }
-  } else {
-    stations = [...DEFAULT_STATIONS];
-    saveStations();
-  }
-
-  const savedSession = sessionStorage.getItem('cpo_delhi_session');
-  if (savedSession) {
-    try {
-      currentAuth = JSON.parse(savedSession);
-      if (currentAuth.isLoggedIn && currentAuth.role === 'employee' && currentAuth.userData) {
-        const fresh = employees.find(e => e.id === currentAuth.userData.id);
-        if (fresh) currentAuth.userData = fresh;
-      }
-    } catch (e) {
-      currentAuth = { isLoggedIn: false, role: null, userData: null };
-    }
-  }
-
-  updateUIAuthState();
-  renderPskListTable();
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  initializeData();
+window.addEventListener('DOMContentLoaded', async () => {
+  await initializeData();
   navigateTo('home');
 });
