@@ -1158,3 +1158,400 @@ function requestResetEmployeePassword(empId) {
   if (!emp) return;
 
   openSecurityWarningModal(
+    'RESET_PASSWORD_2FA',
+    { empId: emp.id },
+    `SECURITY AUTHORIZATION: Kya aap sach me employee "${emp.name}" (${emp.id}) ka password reset karke default 'pass123' set karna chahte hain? Confirm karne ke liye apna Admin NIC Username aur Password enter karein.`
+  );
+}
+
+function closeViewRecordModal() {
+  document.getElementById('viewRecordModal').classList.add('hidden');
+  selectedRecordForModal = null;
+}
+
+function exportToCSV() {
+  if (!employees || employees.length === 0) {
+    showToast("No employee records to export.", "error");
+    return;
+  }
+
+  const headers = [
+    "Employee_ID", "Employee_Name", "Date_Of_Birth", "Father_Name", "Mother_Name",
+    "Designation", "Group", "Pay_Level", "Basic_Pay", "Date_Of_Joining",
+    "Date_Of_Retirement", "Increment_Due_On", "Mobile_No", "Email_ID", "EL_Balance", "HPL_Balance", "CCL_Balance"
+  ];
+  
+  const rows = employees.map(emp => {
+    const b = calculateLeaveBalances(emp);
+    return [
+      `"${emp.id}"`, `"${emp.name}"`, `"${emp.dob}"`, `"${emp.fatherName || ''}"`,
+      `"${emp.motherName || ''}"`, `"${emp.designation}"`, `"${emp.group}"`,
+      `"${emp.payLevel}"`, `"${emp.basicPay || ''}"`, `"${emp.doj}"`,
+      `"${emp.dor}"`, `"${emp.incrementDue || ''}"`, `"${emp.phone}"`, `"${emp.email}"`,
+      `"${b.EL}"`, `"${b.HPL}"`, `"${b.CCL}"`
+    ];
+  });
+
+  const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  const timestamp = new Date().toISOString().slice(0, 10);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `CPO_RPO_Delhi_Staff_Register_${timestamp}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  showToast(`Exported ${employees.length} records to CSV format.`, "success");
+}
+
+function printSingleRecordModal() {
+  if (!selectedRecordForModal) return;
+  printSingleEmployee(selectedRecordForModal);
+}
+
+function printCurrentEmployeeSlip() {
+  if (currentAuth.role === 'employee' && currentAuth.userData) {
+    printSingleEmployee(currentAuth.userData);
+  }
+}
+
+function printSingleEmployee(emp) {
+  const printableArea = document.getElementById('printableArea');
+  const b = calculateLeaveBalances(emp);
+
+  let eventsHtml = "";
+  if (emp.events && emp.events.length > 0) {
+    eventsHtml = `
+      <h4 style="margin: 20px 0 8px 0; font-size: 12px; color: #0b2545; border-bottom: 2px solid #cbd5e1; padding-bottom: 4px;">VERIFIED SERVICE BOOK EVENTS RECORD</h4>
+      <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 20px;">
+        <thead>
+          <tr style="background: #f8fafc;">
+            <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Date</th>
+            <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Event</th>
+            <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Order No.</th>
+            <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left;">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${emp.events.map(ev => {
+            const isCancelled = ev.status === 'cancelled';
+            return `
+            <tr style="${isCancelled ? 'background-color: #ffe4e6; text-decoration: line-through; color: #9f1239;' : ''}">
+              <td style="border: 1px solid #cbd5e1; padding: 6px;">${formatDate(ev.date)}</td>
+              <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
+                ${ev.type}${isCancelled ? '(CANCELLED)' : ''}
+              </td>
+              <td style="border: 1px solid #cbd5e1; padding: 6px;">${ev.orderNo}</td>
+              <td style="border: 1px solid #cbd5e1; padding: 6px;">
+                ${ev.description}${isCancelled ? `<br><small style="color: #be123c;">[Reason: ${ev.cancellationReason || 'Withdrawn'}]</small>` : ''}
+              </td>
+            </tr>
+          `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  printableArea.innerHTML = `
+    <div style="font-family: Arial, sans-serif; padding: 30px; border: 2px solid #0b2545; max-width: 800px; margin: auto;">
+      <div style="text-align: center; border-bottom: 2px solid #0b2545; padding-bottom: 10px; margin-bottom: 20px;">
+        <p style="margin: 0; font-size: 12px; font-weight: bold; color: #ff9933;">GOVERNMENT OF INDIA • MINISTRY OF EXTERNAL AFFAIRS</p>
+        <h2 style="margin: 4px 0; color: #0b2545; font-size: 20px;">CENTRAL PASSPORT ORGANIZATION</h2>
+        <h3 style="margin: 0; color: #134074; font-size: 15px;">REGIONAL PASSPORT OFFICE, DELHI</h3>
+        <p style="margin: 4px 0 0 0; font-size: 11px; color: #555;">Official e-Service Book Transcript (Leave Account: EL, HPL, CCL)</p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 15px;">
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f8fafc; width: 35%; font-weight: bold;">CPO Employee ID:</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold; font-family: monospace;">${emp.id}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold;">Employee Name:</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold;">${emp.name}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold;">Date of Birth (DOB):</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1;">${formatDate(emp.dob)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold;">Father's / Mother's Name:</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1;">${emp.fatherName || '--'} / ${emp.motherName || '--'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold;">Designation & Group:</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1;">${emp.designation} (${emp.group})</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold;">Basic Pay (7th CPC):</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold; color: #0b2545;">₹${Number(emp.basicPay || 0).toLocaleString('en-IN')} (${emp.payLevel})</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-weight: bold;">Date of Joining / Retirement:</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1;">DOJ: ${formatDate(emp.doj)} | Superannuation (60 Yrs): <strong>${formatDate(emp.dor)}</strong></td>
+        </tr>
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f0fdf4; font-weight: bold; color: #166534;">Next Increment Due On:</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold; color: #166534;">${emp.incrementDue || '01 Jul 2027'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; background: #f0fdf4; font-weight: bold; color: #166534;">Verified Leave Balances:</td>
+          <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: bold; color: #166534;">EL: ${b.EL} Days | HPL: ${b.HPL} Days | CCL: ${b.CCL} Days</td>
+        </tr>
+      </table>
+
+      ${eventsHtml}
+    </div>
+  `;
+
+  printableArea.classList.remove('hidden');
+  window.print();
+  printableArea.classList.add('hidden');
+}
+
+function renderEmployeeDashboard() {
+  const emp = currentAuth.userData;
+  if (!emp) return;
+
+  const balances = calculateLeaveBalances(emp);
+  const eventsCount = emp.events ? emp.events.length : 0;
+
+  document.getElementById('empAvatarLetter').innerText = emp.name.charAt(0).toUpperCase();
+  document.getElementById('empCardName').innerText = emp.name;
+  document.getElementById('empCardDesignation').innerText = emp.designation;
+  document.getElementById('empCardId').innerText = emp.id;
+  document.getElementById('empCardGroupBadge').innerText = emp.group;
+
+  document.getElementById('empDeskElBalance').innerText = `${balances.EL} Days`;
+  document.getElementById('empDeskHplBalance').innerText = `${balances.HPL} Days`;
+  document.getElementById('empDeskCclBalance').innerText = `${balances.CCL} Days`;
+  document.getElementById('empDeskEventsCount').innerText = `${eventsCount} Entries`;
+
+  document.getElementById('detailEmpId').innerText = emp.id;
+  document.getElementById('detailDob').innerText = formatDate(emp.dob);
+  document.getElementById('detailFatherName').innerText = emp.fatherName || '--';
+  document.getElementById('detailMotherName').innerText = emp.motherName || '--';
+  document.getElementById('detailDesignation').innerText = emp.designation;
+  document.getElementById('detailGroup').innerText = emp.group;
+  document.getElementById('detailPayLevel').innerText = emp.payLevel;
+  document.getElementById('detailBasicPay').innerText = `₹${Number(emp.basicPay || 0).toLocaleString('en-IN')}`;
+  document.getElementById('detailDoj').innerText = formatDate(emp.doj);
+  document.getElementById('detailDor').innerText = `${formatDate(emp.dor)} (Superannuation)`;
+  document.getElementById('detailIncrementDue').innerText = emp.incrementDue || '01 Jul 2027';
+  document.getElementById('detailContact').innerText = `${emp.email} • +91 ${emp.phone}`;
+
+  const leaveTbody = document.getElementById('empSelfLeaveTableBody');
+  const ledger = emp.leaveLedger || [];
+  if (ledger.length === 0) {
+    leaveTbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-700 font-bold">No leave ledger transactions on record.</td></tr>`;
+  } else {
+    leaveTbody.innerHTML = ledger.map(l => {
+      const isCredit = l.action === 'Credit';
+      return `
+        <tr class="hover:bg-slate-50 border-b border-slate-200">
+          <td class="py-2.5 px-3 font-mono text-xs font-bold">${formatDate(l.date)}</td>
+          <td class="py-2.5 px-3 font-black text-slate-900">${l.type}</td>
+          <td class="py-2.5 px-3">
+            <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-black border ${isCredit ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-rose-100 text-rose-950 border-rose-300'}">
+              ${l.action}
+            </span>
+          </td>
+          <td class="py-2.5 px-3 font-mono font-black text-center ${isCredit ? 'text-emerald-800' : 'text-rose-800'}">
+            ${isCredit ? '+' : '-'}${l.days}
+          </td>
+          <td class="py-2.5 px-3 text-slate-900 font-bold">${l.orderNo}</td>
+          <td class="py-2.5 px-3 text-slate-700 font-semibold">${l.period || '--'}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  const eventsContainer = document.getElementById('empSelfEventsContainer');
+  const events = emp.events || [];
+  if (events.length === 0) {
+    eventsContainer.innerHTML = `<p class="text-xs text-slate-700 font-bold p-3 bg-slate-50 rounded border border-slate-200">No official service events recorded in your e-Service Book yet.</p>`;
+  } else {
+    eventsContainer.innerHTML = events.map(ev => {
+      const isCancelled = ev.status === 'cancelled';
+      return `
+        <div class="p-3 bg-white rounded-lg border-2 ${isCancelled ? 'border-rose-300 bg-rose-50/40 opacity-80' : 'border-slate-200'}">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-black ${isCancelled ? 'bg-rose-200 text-rose-950 border border-rose-300' : 'bg-amber-100 text-amber-950 border border-amber-300'}">
+                ${ev.type}
+              </span>
+              ${isCancelled ? '<span class="px-2 py-0.2 rounded text-[10px] font-black bg-rose-600 text-white tracking-wider">CANCELLED / WITHDRAWN</span>' : ''}
+            </div>
+            <span class="text-xs font-mono font-black text-gov-navy">${formatDate(ev.date)}</span>
+          </div>
+          <p class="text-xs ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'} font-bold mt-1.5">${ev.description}</p>
+          ${isCancelled ? `
+            <div class="mt-1 text-[11px] text-rose-800 font-semibold italic">
+              <strong>Order Remark:</strong> ${ev.cancellationReason || 'Withdrawn / Cancelled'}
+            </div>
+          ` : ''}
+          <div class="mt-2 pt-2 border-t border-slate-200 text-xs font-bold text-slate-600 flex justify-between items-center">
+            <span><strong>Order Ref:</strong> ${ev.orderNo}</span>
+            <span><strong>Attesting Office:</strong> ${ev.authority}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function selectStationRow(idx) {
+  selectedStationIndex = idx;
+  const editBtn = document.getElementById('btnEditStationTop');
+  const delBtn = document.getElementById('btnDeleteStationTop');
+
+  if (editBtn && delBtn && stations[idx]) {
+    editBtn.disabled = false;
+    editBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    delBtn.disabled = false;
+    delBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+  }
+  renderPskListTable();
+}
+
+function handleTopEditStation() {
+  if (selectedStationIndex === null || !stations[selectedStationIndex]) {
+    showToast("Please select an office row first.", "error");
+    return;
+  }
+  requestEditPskModal(selectedStationIndex);
+}
+
+function handleTopDeleteStation() {
+  if (selectedStationIndex === null || !stations[selectedStationIndex]) {
+    showToast("Please select an office row first.", "error");
+    return;
+  }
+  requestDeletePskModal(selectedStationIndex);
+}
+
+function renderPskListTable() {
+  const tbody = document.getElementById('pskTableBody');
+  if (!tbody) return;
+
+  if (stations.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-700 font-bold">No passport offices or kendras registered.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = stations.map((st, idx) => {
+    const isSelected = selectedStationIndex === idx;
+    let badgeStyle = "bg-blue-100 text-gov-blue border-blue-300";
+    if (st.type === "Main Office") {
+      badgeStyle = "bg-amber-100 text-amber-950 border-amber-400 font-black";
+    } else if (st.type === "POPSK") {
+      badgeStyle = "bg-purple-100 text-purple-900 border-purple-300 font-bold";
+    }
+
+    return `
+      <tr class="hover:bg-blue-50 cursor-pointer transition-colors ${isSelected ? 'bg-blue-100 font-semibold' : ''}" onclick="selectStationRow(${idx})">
+        <td class="py-3 px-3 text-center">
+          <input type="radio" name="stationSelectionRadio" value="${idx}" ${isSelected ? 'checked' : ''} class="h-4 w-4 text-gov-navy focus:ring-gov-navy cursor-pointer">
+        </td>
+        <td class="py-3 px-3">
+          <span class="inline-block px-2 py-0.5 rounded text-[10px] uppercase font-black border ${badgeStyle}">${st.code}</span>
+          <div class="text-[11px] text-slate-700 font-bold mt-0.5">${st.type}</div>
+        </td>
+        <td class="py-3 px-4 font-black text-gov-navy">
+          <div>${st.name}</div>
+        </td>
+        <td class="py-3 px-4 text-slate-900 font-medium leading-relaxed text-xs">
+          <div class="flex items-start">
+            <i class="fa-solid fa-location-dot text-rose-600 mr-2 mt-0.5 flex-shrink-0 text-xs"></i>
+            <span>${st.address}</span>
+          </div>
+        </td>
+        <td class="py-3 px-3 text-slate-800 font-semibold">
+          ${st.jurisdiction}
+        </td>
+        <td class="py-3 px-3 text-center font-black text-slate-900">
+          ${st.staff} Staff
+        </td>
+        <td class="py-3 px-3 text-center">
+          <span class="inline-block text-[10px] bg-green-100 text-green-900 px-2.5 py-0.5 rounded-full font-black border border-green-300">
+            ${st.status}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function requestOpenPskModal() {
+  document.getElementById('pskModalTitle').innerText = "Add Passport Office / Kendra";
+  document.getElementById('formPskIndex').value = "-1";
+  document.getElementById('pskForm').reset();
+  document.getElementById('pskModal').classList.remove('hidden');
+}
+
+function requestEditPskModal(idx) {
+  const st = stations[idx];
+  if (!st) return;
+
+  document.getElementById('pskModalTitle').innerText = `Edit: ${st.name}`;
+  document.getElementById('formPskIndex').value = idx;
+  document.getElementById('formPskType').value = st.type;
+  document.getElementById('formPskCode').value = st.code;
+  document.getElementById('formPskName').value = st.name;
+  document.getElementById('formPskAddress').value = st.address;
+  document.getElementById('formPskJurisdiction').value = st.jurisdiction;
+  document.getElementById('formPskStaff').value = st.staff;
+
+  document.getElementById('pskModal').classList.remove('hidden');
+}
+
+function closePskModal() {
+  document.getElementById('pskModal').classList.add('hidden');
+}
+
+function handlePskFormSubmit(e) {
+  e.preventDefault();
+  const idx = parseInt(document.getElementById('formPskIndex').value, 10);
+
+  const stationData = {
+    type: document.getElementById('formPskType').value,
+    code: document.getElementById('formPskCode').value.trim(),
+    name: document.getElementById('formPskName').value.trim(),
+    address: document.getElementById('formPskAddress').value.trim(),
+    jurisdiction: document.getElementById('formPskJurisdiction').value.trim(),
+    staff: Number(document.getElementById('formPskStaff').value),
+    status: "Operational"
+  };
+
+  closePskModal();
+
+  if (idx === -1) {
+    openSecurityWarningModal('ADD_PSK', stationData, `Are you sure you want to officially commission "${stationData.name}" (${stationData.type}) under Regional Passport Office Delhi jurisdiction?`);
+  } else {
+    openSecurityWarningModal('EDIT_PSK', { idx, stationData }, `Are you sure you want to modify details, address, or jurisdiction for "${stationData.name}"?`);
+  }
+}
+
+function requestDeletePskModal(idx) {
+  const st = stations[idx];
+  if (!st) return;
+
+  openSecurityWarningModal('DELETE_PSK', { idx, name: st.name }, `WARNING: You are requesting the official decommissioning and removal of "${st.name}" (${st.code}).`);
+}
+
+async function deleteEmployeeFromSupabase(empIds) {
+  try {
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    if (client) {
+      await client.from('employees').delete().in('id', empIds);
+    }
+  } catch (err) {
+    console.error("Supabase Delete Error:", err);
+  }
+}
+```[cite: 5, 8]
