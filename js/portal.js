@@ -637,6 +637,10 @@ async function handleAddEventSubmit(e) {
   const effDate = document.getElementById('eventFormDate').value;
 
   let updatedPayMsg = "";
+  
+  // Reversal ke liye purani values ko snapshot mein rakhna
+  const prevBasic = Number(activeEmployeeForEvents.basicPay) || 0;
+  const prevIncDue = activeEmployeeForEvents.incrementDue || '';
 
   if (eventType === 'Annual Increment') {
     const nextBasic = Number(document.getElementById('eventNextBasicPay').value);
@@ -657,13 +661,16 @@ async function handleAddEventSubmit(e) {
     type: eventType,
     orderNo: orderNo,
     description: desc,
-    authority: authority
+    authority: authority,
+    status: 'active', // 'active' ya 'cancelled'
+    previousBasicPay: prevBasic, // Reversal ke liye
+    previousIncrementDue: prevIncDue // Reversal ke liye
   };
 
   if (!activeEmployeeForEvents.events) activeEmployeeForEvents.events = [];
   activeEmployeeForEvents.events.unshift(newEvent);
 
-  await saveEmployees();
+  saveEmployees();
   renderEventsTimelineList();
   
   document.getElementById('eventsModalSub').innerText = `${activeEmployeeForEvents.name} (${activeEmployeeForEvents.id}) • Basic Pay: ₹${Number(activeEmployeeForEvents.basicPay || 0).toLocaleString('en-IN')} • Next Inc: ${activeEmployeeForEvents.incrementDue || '--'}`;
@@ -676,7 +683,6 @@ async function handleAddEventSubmit(e) {
 
   showToast(`Service event added!${updatedPayMsg}`, "success");
 }
-
 async function deleteServiceEvent(eventId) {
   if (!activeEmployeeForEvents) return;
   if (!confirm("Are you sure you want to delete this service book event log?")) return;
