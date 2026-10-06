@@ -207,7 +207,7 @@ async function saveEmployees() {
   // 1. Browser backup
   localStorage.setItem('cpo_delhi_employees_v8_3', JSON.stringify(employees));
   
-  if (currentAuth.isLoggedIn && currentAuth.role === 'employee' && currentAuth.userData) {
+  if (typeof currentAuth !== 'undefined' && currentAuth.isLoggedIn && currentAuth.role === 'employee' && currentAuth.userData) {
     const fresh = employees.find(e => e.id === currentAuth.userData.id);
     if (fresh) {
       currentAuth.userData = fresh;
@@ -217,7 +217,8 @@ async function saveEmployees() {
 
   // 2. Supabase Cloud Database Sync
   try {
-    if (typeof supabaseClient !== 'undefined') {
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    if (client) {
       const recordsToSync = employees.map(emp => ({
         id: emp.id,
         name: emp.name,
@@ -239,24 +240,18 @@ async function saveEmployees() {
         updated_at: new Date().toISOString()
       }));
 
-      const { error } = await supabaseClient
+      const { error } = await client
         .from('employees')
         .upsert(recordsToSync, { onConflict: 'id' });
 
       if (error) {
-        console.error("Supabase Save Error:", error);
+        console.warn("Supabase Save Warning:", error.message);
       }
     }
   } catch (err) {
-    console.error("Supabase Network Sync Failed:", err);
-  }
-}  
-    catch (err) {
-    console.error("Supabase Network Sync Failed:", err);
+    console.warn("Supabase Network Sync Failed:", err);
   }
 }
-}
-
 function saveStations() {
   localStorage.setItem('cpo_delhi_stations', JSON.stringify(stations));
   renderPskListTable();
