@@ -75,3 +75,21 @@
     text-align: center !important;
     white-space: nowrap !important;
 }
+/* Fix table cut issue */
+.portal-card {
+    overflow-x: auto !important;
+}
+
+table {
+    table-layout: auto !important;
+    width: 100% !important;
+    min-width: 1250px !important;
+}
+
+table th:last-child,
+table td:last-child {
+    width: 65px !important;
+    min-width: 65px !important;
+    padding-right: 15px !important;
+    text-align: center !important;
+}
