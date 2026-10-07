@@ -455,9 +455,9 @@ function renderAdminTable(filteredData = null) {
           <i class="fa-solid fa-timeline mr-1.5 text-amber-800"></i> Events
         </button>
       </td>
-      <td class="py-3 px-3 text-center whitespace-nowrap">
-        <button onclick="viewEmployeeRecord(${realIndex})" title="View Service Book Dossier" class="w-8 h-8 rounded-lg bg-blue-100 text-blue-900 hover:bg-blue-200 border border-blue-300 inline-flex items-center justify-center transition-colors font-bold">
-          <i class="fa-solid fa-eye text-sm"></i>
+      <td class="py-3 px-4 text-center whitespace-nowrap align-middle">
+        <button onclick="viewEmployeeRecord(${realIndex})" title="View Service Book Dossier" class="h-9 w-9 rounded-lg bg-blue-100 text-blue-900 hover:bg-blue-200 border border-blue-300 inline-flex items-center justify-center transition-colors font-bold shrink-0">
+          <i class="fa-solid fa-eye text-sm leading-none flex items-center justify-center"></i>
         </button>
       </td>
     `;
