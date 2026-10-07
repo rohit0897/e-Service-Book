@@ -637,10 +637,16 @@ async function handleAddEventSubmit(e) {
   const effDate = document.getElementById('eventFormDate').value;
 
   let updatedPayMsg = "";
+  let prevBasic = null;
+  let prevIncDue = null;
 
   if (eventType === 'Annual Increment') {
     const nextBasic = Number(document.getElementById('eventNextBasicPay').value);
     const nextIncDue = document.getElementById('eventNextIncrementDueText').value;
+
+    // Purani values save karein taaki delete hone par reverse ho sake
+    prevBasic = Number(activeEmployeeForEvents.basicPay) || 0;
+    prevIncDue = activeEmployeeForEvents.incrementDue || '01 Jul 2027';
 
     if (nextBasic > 0) {
       activeEmployeeForEvents.basicPay = nextBasic;
@@ -657,7 +663,10 @@ async function handleAddEventSubmit(e) {
     type: eventType,
     orderNo: orderNo,
     description: desc,
-    authority: authority
+    authority: authority,
+    previousBasicPay: prevBasic, // Purana Basic Pay backup
+    previousIncrementDue: prevIncDue, // Purani Due Date backup
+    isDeleted: false // Active record status
   };
 
   if (!activeEmployeeForEvents.events) activeEmployeeForEvents.events = [];
@@ -679,12 +688,30 @@ async function handleAddEventSubmit(e) {
 
 async function deleteServiceEvent(eventId) {
   if (!activeEmployeeForEvents) return;
-  if (!confirm("Are you sure you want to delete this service book event log?")) return;
+  const evt = activeEmployeeForEvents.events.find(e => e.id === eventId);
+  if (!evt) return;
 
-  activeEmployeeForEvents.events = activeEmployeeForEvents.events.filter(e => e.id !== eventId);
+  if (!confirm("Are you sure you want to cancel/revert this service book event? Any increment pay will be reversed.")) return;
+
+  // 1. Soft Delete mark karein (record preserve rahega audit ke liye)
+  evt.isDeleted = true;
+  evt.deletedAt = new Date().toISOString();
+
+  // 2. Agar Increment tha to Basic Pay aur Increment Due Date purani value par wapas restore karein
+  if (evt.type === 'Annual Increment' && evt.previousBasicPay) {
+    activeEmployeeForEvents.basicPay = evt.previousBasicPay;
+    if (evt.previousIncrementDue) {
+      activeEmployeeForEvents.incrementDue = evt.previousIncrementDue;
+    }
+  }
+
   await saveEmployees();
   renderEventsTimelineList();
-  showToast("Service event removed.", "info");
+  
+  // Modal Subtitle update karein
+  document.getElementById('eventsModalSub').innerText = `${activeEmployeeForEvents.name} (${activeEmployeeForEvents.id}) • Basic Pay: ₹${Number(activeEmployeeForEvents.basicPay || 0).toLocaleString('en-IN')} • Next Inc: ${activeEmployeeForEvents.incrementDue || '--'}`;
+  
+  showToast("Service event cancelled & particulars reversed to previous state.", "info");
 }
 
 function renderEventsTimelineList() {
@@ -697,26 +724,35 @@ function renderEventsTimelineList() {
     return;
   }
 
-  container.innerHTML = events.map(evt => `
-    <div class="p-3 bg-white rounded-lg border-2 border-slate-200 shadow-xs relative">
-      <div class="flex justify-between items-start">
-        <div class="flex items-center space-x-2">
-          <span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-950 border border-amber-300">
-            ${evt.type}
-          </span>
-          <span class="text-xs font-mono font-bold text-gov-navy">${formatDate(evt.date)}</span>
+  container.innerHTML = events.map(evt => {
+    const isCancelled = evt.isDeleted === true;
+
+    return `
+      <div class="p-3 rounded-lg border-2 shadow-xs relative transition-all ${isCancelled ? 'bg-rose-50/75 border-rose-300 opacity-80' : 'bg-white border-slate-200'}">
+        <div class="flex justify-between items-start">
+          <div class="flex items-center space-x-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-black ${isCancelled ? 'bg-rose-200 text-rose-950 border border-rose-400' : 'bg-amber-100 text-amber-950 border border-amber-300'}">
+              ${evt.type}
+            </span>
+            <span class="text-xs font-mono font-bold text-gov-navy ${isCancelled ? 'line-through text-slate-500' : ''}">${formatDate(evt.date)}</span>
+            ${isCancelled ? '<span class="px-1.5 py-0.2 bg-rose-600 text-white rounded text-[9px] font-black tracking-wider uppercase">[CANCELLED / REVERTED]</span>' : ''}
+          </div>
+          ${!isCancelled ? `
+            <button onclick="deleteServiceEvent('${evt.id}')" title="Cancel & Revert Event" class="text-rose-600 hover:text-rose-800 text-xs p-1 font-bold">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          ` : `
+            <span class="text-[10px] text-rose-700 font-extrabold italic">Cancelled</span>
+          `}
         </div>
-        <button onclick="deleteServiceEvent('${evt.id}')" title="Delete Event" class="text-rose-600 hover:text-rose-800 text-xs p-1 font-bold">
-          <i class="fa-solid fa-trash-can"></i>
-        </button>
+        <p class="text-xs font-bold mt-1.5 leading-relaxed ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'}">${evt.description}</p>
+        <div class="mt-2 pt-2 border-t border-slate-200 flex flex-wrap justify-between items-center text-[11px] text-slate-700 font-semibold">
+          <span><strong>Order:</strong> ${evt.orderNo}</span>
+          <span><strong>Attested by:</strong> ${evt.authority}</span>
+        </div>
       </div>
-      <p class="text-xs text-slate-900 font-bold mt-1.5 leading-relaxed">${evt.description}</p>
-      <div class="mt-2 pt-2 border-t border-slate-200 flex flex-wrap justify-between items-center text-[11px] text-slate-700 font-semibold">
-        <span><strong>Order:</strong> ${evt.orderNo}</span>
-        <span><strong>Attested by:</strong> ${evt.authority}</span>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function openLeaveModal(index) {
@@ -1010,6 +1046,26 @@ function viewEmployeeRecord(index) {
   selectedRecordForModal = emp;
   const b = calculateLeaveBalances(emp);
 
+  let eventsHtml = "";
+  if (emp.events && emp.events.length > 0) {
+    eventsHtml = `
+      <div class="mt-4 pt-3 border-t-2 border-slate-200 col-span-2">
+        <h5 class="text-xs font-black text-gov-navy uppercase tracking-wider mb-2">Service Book Events History</h5>
+        <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          ${emp.events.map(ev => `
+            <div class="p-2 rounded border text-xs ${ev.isDeleted ? 'bg-rose-50 border-rose-200 opacity-75' : 'bg-slate-50 border-slate-200'}">
+              <div class="flex justify-between font-bold">
+                <span>${ev.type}${ev.isDeleted ? '<span class="text-rose-600 font-black">[CANCELLED]</span>' : ''}</span>
+                <span class="text-slate-500 font-mono">${formatDate(ev.date)}</span>
+              </div>
+              <p class="text-slate-700 mt-0.5 ${ev.isDeleted ? 'line-through' : ''}">${ev.description}</p>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   const content = document.getElementById('viewModalContent');
   content.innerHTML = `
     <div class="bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
@@ -1088,6 +1144,8 @@ function viewEmployeeRecord(index) {
           </button>
         </div>
       </div>
+
+      ${eventsHtml}
     </div>
   `;
 
@@ -1179,9 +1237,9 @@ function printSingleEmployee(emp) {
         </thead>
         <tbody>
           ${emp.events.map(ev => `
-            <tr>
+            <tr style="${ev.isDeleted ? 'color: #888; text-decoration: line-through;' : ''}">
               <td style="border: 1px solid #cbd5e1; padding: 6px;">${formatDate(ev.date)}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${ev.type}</td>
+              <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${ev.type}${ev.isDeleted ? '(CANCELLED)' : ''}</td>
               <td style="border: 1px solid #cbd5e1; padding: 6px;">${ev.orderNo}</td>
               <td style="border: 1px solid #cbd5e1; padding: 6px;">${ev.description}</td>
             </tr>
@@ -1310,21 +1368,28 @@ function renderEmployeeDashboard() {
   if (events.length === 0) {
     eventsContainer.innerHTML = `<p class="text-xs text-slate-700 font-bold p-3 bg-slate-50 rounded border border-slate-200">No official service events recorded in your e-Service Book yet.</p>`;
   } else {
-    eventsContainer.innerHTML = events.map(ev => `
-      <div class="p-3 bg-white rounded-lg border-2 border-slate-200">
-        <div class="flex justify-between items-center">
-          <span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-950 border border-amber-300">
-            ${ev.type}
-          </span>
-          <span class="text-xs font-mono font-black text-gov-navy">${formatDate(ev.date)}</span>
+    eventsContainer.innerHTML = events.map(ev => {
+      const isCancelled = ev.isDeleted === true;
+
+      return `
+        <div class="p-3 rounded-lg border-2 shadow-xs ${isCancelled ? 'bg-rose-50/75 border-rose-300 opacity-80' : 'bg-white border-slate-200'}">
+          <div class="flex justify-between items-center">
+            <span class="px-2 py-0.5 rounded text-[10px] font-black ${isCancelled ? 'bg-rose-200 text-rose-950 border border-rose-400' : 'bg-amber-100 text-amber-950 border border-amber-300'}">
+              ${ev.type}
+            </span>
+            <div class="flex items-center gap-2">
+              ${isCancelled ? '<span class="px-1.5 py-0.2 bg-rose-600 text-white rounded text-[9px] font-black uppercase">[CANCELLED]</span>' : ''}
+              <span class="text-xs font-mono font-black text-gov-navy ${isCancelled ? 'line-through text-slate-500' : ''}">${formatDate(ev.date)}</span>
+            </div>
+          </div>
+          <p class="text-xs font-bold mt-1.5 ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'}">${ev.description}</p>
+          <div class="mt-2 pt-2 border-t border-slate-200 text-xs font-bold text-slate-600 flex justify-between items-center">
+            <span><strong>Order Ref:</strong> ${ev.orderNo}</span>
+            <span><strong>Attesting Office:</strong> ${ev.authority}</span>
+          </div>
         </div>
-        <p class="text-xs text-slate-900 font-bold mt-1.5">${ev.description}</p>
-        <div class="mt-2 pt-2 border-t border-slate-200 text-xs font-bold text-slate-600 flex justify-between items-center">
-          <span><strong>Order Ref:</strong> ${ev.orderNo}</span>
-          <span><strong>Attesting Office:</strong> ${ev.authority}</span>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 }
 
