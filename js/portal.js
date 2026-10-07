@@ -53,6 +53,9 @@ function calculateLeaveBalances(emp) {
   let ccl = 0;
 
   emp.leaveLedger.forEach(item => {
+    // Agar leave deleted/cancelled hai to balance calculate karte waqt use chhod dein (Auto Reverse)
+    if (item.isDeleted) return;
+
     const days = Number(item.days || 0);
     const factor = (item.action === 'Credit') ? 1 : -1;
 
@@ -553,13 +556,13 @@ async function handleEmployeeFormSubmit(e) {
     password: document.getElementById('formEmpPassword').value.trim() || 'pass123',
     events: existingRecord ? (existingRecord.events || []) : [],
     leaveLedger: existingRecord ? (existingRecord.leaveLedger || [
-      { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Initial Credit (Joining/Balance)", period: "Opening" },
-      { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Initial Credit (Joining/Balance)", period: "Opening" },
-      { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Initial CCL Allocation", period: "Current Year" }
+      { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Initial Credit (Joining/Balance)", period: "Opening", isDeleted: false },
+      { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Initial Credit (Joining/Balance)", period: "Opening", isDeleted: false },
+      { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Initial CCL Allocation", period: "Current Year", isDeleted: false }
     ]) : [
-      { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Initial Credit (Joining/Balance)", period: "Opening" },
-      { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Initial Credit (Joining/Balance)", period: "Opening" },
-      { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Initial CCL Allocation", period: "Current Year" }
+      { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Initial Credit (Joining/Balance)", period: "Opening", isDeleted: false },
+      { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Initial Credit (Joining/Balance)", period: "Opening", isDeleted: false },
+      { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Initial CCL Allocation", period: "Current Year", isDeleted: false }
     ]
   };
 
@@ -644,7 +647,6 @@ async function handleAddEventSubmit(e) {
     const nextBasic = Number(document.getElementById('eventNextBasicPay').value);
     const nextIncDue = document.getElementById('eventNextIncrementDueText').value;
 
-    // Purani values save karein taaki delete hone par reverse ho sake
     prevBasic = Number(activeEmployeeForEvents.basicPay) || 0;
     prevIncDue = activeEmployeeForEvents.incrementDue || '01 Jul 2027';
 
@@ -664,9 +666,9 @@ async function handleAddEventSubmit(e) {
     orderNo: orderNo,
     description: desc,
     authority: authority,
-    previousBasicPay: prevBasic, // Purana Basic Pay backup
-    previousIncrementDue: prevIncDue, // Purani Due Date backup
-    isDeleted: false // Active record status
+    previousBasicPay: prevBasic,
+    previousIncrementDue: prevIncDue,
+    isDeleted: false
   };
 
   if (!activeEmployeeForEvents.events) activeEmployeeForEvents.events = [];
@@ -693,11 +695,11 @@ async function deleteServiceEvent(eventId) {
 
   if (!confirm("Are you sure you want to cancel/revert this service book event? Any increment pay will be reversed.")) return;
 
-  // 1. Soft Delete mark karein (record preserve rahega audit ke liye)
+  // 1. Soft Delete mark karein
   evt.isDeleted = true;
   evt.deletedAt = new Date().toISOString();
 
-  // 2. Agar Increment tha to Basic Pay aur Increment Due Date purani value par wapas restore karein
+  // 2. Particulars/Pay revert karein
   if (evt.type === 'Annual Increment' && evt.previousBasicPay) {
     activeEmployeeForEvents.basicPay = evt.previousBasicPay;
     if (evt.previousIncrementDue) {
@@ -708,7 +710,6 @@ async function deleteServiceEvent(eventId) {
   await saveEmployees();
   renderEventsTimelineList();
   
-  // Modal Subtitle update karein
   document.getElementById('eventsModalSub').innerText = `${activeEmployeeForEvents.name} (${activeEmployeeForEvents.id}) • Basic Pay: ₹${Number(activeEmployeeForEvents.basicPay || 0).toLocaleString('en-IN')} • Next Inc: ${activeEmployeeForEvents.incrementDue || '--'}`;
   
   showToast("Service event cancelled & particulars reversed to previous state.", "info");
@@ -807,7 +808,8 @@ async function handleAddLeaveSubmit(e) {
     type: type,
     days: days,
     orderNo: document.getElementById('leaveFormOrder').value.trim(),
-    period: document.getElementById('leaveFormPeriod').value.trim() || 'N/A'
+    period: document.getElementById('leaveFormPeriod').value.trim() || 'N/A',
+    isDeleted: false // Active record status
   };
 
   if (!activeEmployeeForLeave.leaveLedger) activeEmployeeForLeave.leaveLedger = [];
@@ -823,13 +825,22 @@ async function handleAddLeaveSubmit(e) {
 
 async function deleteLeaveTransaction(leaveId) {
   if (!activeEmployeeForLeave) return;
-  if (!confirm("Are you sure you want to delete this leave ledger entry? Balance will automatically recalculate.")) return;
+  const item = activeEmployeeForLeave.leaveLedger.find(l => l.id === leaveId);
+  if (!item) return;
 
-  activeEmployeeForLeave.leaveLedger = activeEmployeeForLeave.leaveLedger.filter(l => l.id !== leaveId);
+  if (!confirm("Are you sure you want to cancel this leave entry? Leave balance will automatically be reversed.")) return;
+
+  // 1. Soft Delete mark karein
+  item.isDeleted = true;
+  item.deletedAt = new Date().toISOString();
+
+  // 2. Local storage aur Supabase sync karein
   await saveEmployees();
+  
+  // 3. Balance recalculate (auto reverse) aur render karein
   updateModalLeaveBalances();
   renderLeaveLedgerTable();
-  showToast("Leave entry deleted. Balances updated.", "info");
+  showToast("Leave entry cancelled and balance reversed.", "info");
 }
 
 function renderLeaveLedgerTable() {
@@ -844,27 +855,35 @@ function renderLeaveLedgerTable() {
 
   tbody.innerHTML = ledger.map(item => {
     const isCredit = item.action === 'Credit';
+    const isCancelled = item.isDeleted === true;
     const badgeColor = isCredit ? 'bg-emerald-100 text-emerald-950 border-emerald-400 font-black' : 'bg-rose-100 text-rose-950 border-rose-400 font-black';
     const sign = isCredit ? '+' : '-';
 
     return `
-      <tr class="hover:bg-slate-50 border-b border-slate-200">
-        <td class="py-2 px-2.5 font-mono text-xs font-bold">${formatDate(item.date)}</td>
-        <td class="py-2 px-2.5 font-black text-slate-900">${item.type}</td>
+      <tr class="hover:bg-slate-50 border-b border-slate-200 ${isCancelled ? 'bg-rose-50/75 opacity-75' : ''}">
+        <td class="py-2 px-2.5 font-mono text-xs font-bold ${isCancelled ? 'line-through text-slate-400' : ''}">${formatDate(item.date)}</td>
+        <td class="py-2 px-2.5 font-black text-slate-900">
+          <span class="${isCancelled ? 'line-through text-slate-400' : ''}">${item.type}</span>
+          ${isCancelled ? '<span class="ml-1 px-1.5 py-0.2 bg-rose-600 text-white rounded text-[9px] font-black uppercase inline-block">[CANCELLED]</span>' : ''}
+        </td>
         <td class="py-2 px-2.5">
-          <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase border ${badgeColor}">
+          <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase border ${badgeColor} ${isCancelled ? 'opacity-50' : ''}">
             ${item.action}
           </span>
         </td>
-        <td class="py-2 px-2.5 font-mono font-black text-center ${isCredit ? 'text-emerald-800' : 'text-rose-800'}">
+        <td class="py-2 px-2.5 font-mono font-black text-center ${isCancelled ? 'line-through text-slate-400' : (isCredit ? 'text-emerald-800' : 'text-rose-800')}">
           ${sign}${item.days}
         </td>
-        <td class="py-2 px-2.5 text-slate-900 font-semibold max-w-[200px] truncate" title="${item.orderNo}">${item.orderNo}</td>
-        <td class="py-2 px-2.5 text-slate-700 font-medium text-xs">${item.period}</td>
+        <td class="py-2 px-2.5 text-slate-900 font-semibold max-w-[200px] truncate ${isCancelled ? 'line-through text-slate-400' : ''}" title="${item.orderNo}">${item.orderNo}</td>
+        <td class="py-2 px-2.5 text-slate-700 font-medium text-xs ${isCancelled ? 'line-through text-slate-400' : ''}">${item.period}</td>
         <td class="py-2 px-2.5 text-center">
-          <button onclick="deleteLeaveTransaction('${item.id}')" class="text-rose-600 hover:text-rose-800 font-bold">
-            <i class="fa-solid fa-trash-can text-xs"></i>
-          </button>
+          ${!isCancelled ? `
+            <button onclick="deleteLeaveTransaction('${item.id}')" title="Cancel Leave" class="text-rose-600 hover:text-rose-800 font-bold">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          ` : `
+            <span class="text-[10px] text-rose-700 font-extrabold italic">Cancelled</span>
+          `}
         </td>
       </tr>
     `;
@@ -959,9 +978,9 @@ function handleExcelFileUpload(event) {
         const existingIdx = employees.findIndex(e => e.id.toLowerCase() === empId.toLowerCase());
         const existingEvents = existingIdx >= 0 ? (employees[existingIdx].events || []) : [];
         const existingLeave = existingIdx >= 0 ? (employees[existingIdx].leaveLedger || []) : [
-          { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Bulk Ingestion Opening Credit", period: "Opening" },
-          { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Bulk Ingestion Opening Credit", period: "Opening" },
-          { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Bulk Ingestion Opening Credit", period: "Opening" }
+          { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Bulk Ingestion Opening Credit", period: "Opening", isDeleted: false },
+          { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Bulk Ingestion Opening Credit", period: "Opening", isDeleted: false },
+          { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Bulk Ingestion Opening Credit", period: "Opening", isDeleted: false }
         ];
 
         const newEmployeeObj = {
@@ -1344,20 +1363,25 @@ function renderEmployeeDashboard() {
   } else {
     leaveTbody.innerHTML = ledger.map(l => {
       const isCredit = l.action === 'Credit';
+      const isCancelled = l.isDeleted === true;
+
       return `
-        <tr class="hover:bg-slate-50 border-b border-slate-200">
-          <td class="py-2.5 px-3 font-mono text-xs font-bold">${formatDate(l.date)}</td>
-          <td class="py-2.5 px-3 font-black text-slate-900">${l.type}</td>
+        <tr class="hover:bg-slate-50 border-b border-slate-200 ${isCancelled ? 'bg-rose-50/75 opacity-75' : ''}">
+          <td class="py-2.5 px-3 font-mono text-xs font-bold ${isCancelled ? 'line-through text-slate-400' : ''}">${formatDate(l.date)}</td>
+          <td class="py-2.5 px-3 font-black text-slate-900">
+            <span class="${isCancelled ? 'line-through text-slate-400' : ''}">${l.type}</span>
+            ${isCancelled ? '<span class="ml-1 px-1.5 py-0.2 bg-rose-600 text-white rounded text-[9px] font-black uppercase inline-block">[CANCELLED]</span>' : ''}
+          </td>
           <td class="py-2.5 px-3">
-            <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-black border ${isCredit ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-rose-100 text-rose-950 border-rose-300'}">
+            <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-black border ${isCredit ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-rose-100 text-rose-950 border-rose-300'} ${isCancelled ? 'opacity-50' : ''}">
               ${l.action}
             </span>
           </td>
-          <td class="py-2.5 px-3 font-mono font-black text-center ${isCredit ? 'text-emerald-800' : 'text-rose-800'}">
+          <td class="py-2.5 px-3 font-mono font-black text-center ${isCancelled ? 'line-through text-slate-400' : (isCredit ? 'text-emerald-800' : 'text-rose-800')}">
             ${isCredit ? '+' : '-'}${l.days}
           </td>
-          <td class="py-2.5 px-3 text-slate-900 font-bold">${l.orderNo}</td>
-          <td class="py-2.5 px-3 text-slate-700 font-semibold">${l.period || '--'}</td>
+          <td class="py-2.5 px-3 text-slate-900 font-bold ${isCancelled ? 'line-through text-slate-400' : ''}">${l.orderNo}</td>
+          <td class="py-2.5 px-3 text-slate-700 font-semibold ${isCancelled ? 'line-through text-slate-400' : ''}">${l.period || '--'}</td>
         </tr>
       `;
     }).join('');
