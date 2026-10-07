@@ -63,3 +63,15 @@
 .border-rose-300 {
   border-color: #fca5a5 !important;
 }
+/* Eye icon aur last column cut hone se bachane ke liye */
+.ledger-table-container {
+    overflow-x: auto !important;
+}
+
+.ledger-table th:last-child,
+.ledger-table td:last-child {
+    min-width: 65px !important;
+    padding-right: 18px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+}
