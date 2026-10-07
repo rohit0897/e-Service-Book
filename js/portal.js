@@ -693,13 +693,22 @@ async function deleteServiceEvent(eventId) {
   const evt = activeEmployeeForEvents.events.find(e => e.id === eventId);
   if (!evt) return;
 
-  if (!confirm("Are you sure you want to cancel/revert this service book event? Any increment pay will be reversed.")) return;
+  const cancelRef = prompt(
+    "SERVICE EVENT CANCELLATION / REVERSAL:\nKripya is entry ko cancel karne ke liye Sanction / Official Order No. ya Reference No. darj karein:"
+  );
 
-  // 1. Soft Delete mark karein
+  if (cancelRef === null) return;
+  if (cancelRef.trim() === "") {
+    showToast("Cancellation Order/Reference No. darj karna anivarya hai.", "error");
+    return;
+  }
+
+  // 1. Soft Delete mark karein aur Cancellation Order store karein
   evt.isDeleted = true;
   evt.deletedAt = new Date().toISOString();
+  evt.cancellationOrderNo = cancelRef.trim();
 
-  // 2. Particulars/Pay revert karein
+  // 2. Particulars / Pay revert karein
   if (evt.type === 'Annual Increment' && evt.previousBasicPay) {
     activeEmployeeForEvents.basicPay = evt.previousBasicPay;
     if (evt.previousIncrementDue) {
@@ -712,7 +721,7 @@ async function deleteServiceEvent(eventId) {
   
   document.getElementById('eventsModalSub').innerText = `${activeEmployeeForEvents.name} (${activeEmployeeForEvents.id}) • Basic Pay: ₹${Number(activeEmployeeForEvents.basicPay || 0).toLocaleString('en-IN')} • Next Inc: ${activeEmployeeForEvents.incrementDue || '--'}`;
   
-  showToast("Service event cancelled & particulars reversed to previous state.", "info");
+  showToast(`Service event cancelled (Order: ${cancelRef.trim()}) & pay particulars reversed.`, "info");
 }
 
 function renderEventsTimelineList() {
@@ -749,6 +758,7 @@ function renderEventsTimelineList() {
         <p class="text-xs font-bold mt-1.5 leading-relaxed ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'}">${evt.description}</p>
         <div class="mt-2 pt-2 border-t border-slate-200 flex flex-wrap justify-between items-center text-[11px] text-slate-700 font-semibold">
           <span><strong>Order:</strong> ${evt.orderNo}</span>
+          ${isCancelled && evt.cancellationOrderNo ? `<span class="text-rose-800 font-bold"><strong>Reversal Order:</strong> ${evt.cancellationOrderNo}</span>` : ''}
           <span><strong>Attested by:</strong> ${evt.authority}</span>
         </div>
       </div>
@@ -828,19 +838,28 @@ async function deleteLeaveTransaction(leaveId) {
   const item = activeEmployeeForLeave.leaveLedger.find(l => l.id === leaveId);
   if (!item) return;
 
-  if (!confirm("Are you sure you want to cancel this leave entry? Leave balance will automatically be reversed.")) return;
+  const cancelRef = prompt(
+    "LEAVE CANCELLATION / REVERSAL:\nKripya is leave entry ko cancel/reverse karne ke liye Competent Authority ka Order No. ya Reference No. darj karein:"
+  );
 
-  // 1. Soft Delete mark karein
+  if (cancelRef === null) return;
+  if (cancelRef.trim() === "") {
+    showToast("Cancellation Order/Reference No. darj karna anivarya hai.", "error");
+    return;
+  }
+
+  // 1. Soft Delete mark karein aur Reversal Order store karein
   item.isDeleted = true;
   item.deletedAt = new Date().toISOString();
+  item.cancellationOrderNo = cancelRef.trim();
 
-  // 2. Local storage aur Supabase sync karein
+  // 2. Storage & Cloud sync
   await saveEmployees();
   
-  // 3. Balance recalculate (auto reverse) aur render karein
+  // 3. Balance recalculate (auto reverse) aur UI render
   updateModalLeaveBalances();
   renderLeaveLedgerTable();
-  showToast("Leave entry cancelled and balance reversed.", "info");
+  showToast(`Leave entry cancelled & balance auto-reversed (Ref: ${cancelRef.trim()}).`, "info");
 }
 
 function renderLeaveLedgerTable() {
@@ -874,11 +893,16 @@ function renderLeaveLedgerTable() {
         <td class="py-2 px-2.5 font-mono font-black text-center ${isCancelled ? 'line-through text-slate-400' : (isCredit ? 'text-emerald-800' : 'text-rose-800')}">
           ${sign}${item.days}
         </td>
-        <td class="py-2 px-2.5 text-slate-900 font-semibold max-w-[200px] truncate ${isCancelled ? 'line-through text-slate-400' : ''}" title="${item.orderNo}">${item.orderNo}</td>
+        <td class="py-2 px-2.5 text-slate-900 font-semibold max-w-[200px]" title="${item.orderNo}">
+          <div class="${isCancelled ? 'line-through text-slate-400' : ''}">${item.orderNo}</div>
+          ${isCancelled && item.cancellationOrderNo ? `
+            <div class="text-[10px] text-rose-800 font-extrabold mt-0.5">Rev Order: ${item.cancellationOrderNo}</div>
+          ` : ''}
+        </td>
         <td class="py-2 px-2.5 text-slate-700 font-medium text-xs ${isCancelled ? 'line-through text-slate-400' : ''}">${item.period}</td>
         <td class="py-2 px-2.5 text-center">
           ${!isCancelled ? `
-            <button onclick="deleteLeaveTransaction('${item.id}')" title="Cancel Leave" class="text-rose-600 hover:text-rose-800 font-bold">
+            <button onclick="deleteLeaveTransaction('${item.id}')" title="Cancel & Reverse Leave" class="text-rose-600 hover:text-rose-800 font-bold">
               <i class="fa-solid fa-trash-can text-xs"></i>
             </button>
           ` : `
@@ -1077,7 +1101,7 @@ function viewEmployeeRecord(index) {
                 <span>${ev.type}${ev.isDeleted ? '<span class="text-rose-600 font-black">[CANCELLED]</span>' : ''}</span>
                 <span class="text-slate-500 font-mono">${formatDate(ev.date)}</span>
               </div>
-              <p class="text-slate-700 mt-0.5 ${ev.isDeleted ? 'line-through' : ''}">${ev.description}</p>
+              <p class="text-slate-700 mt-0.5 ${ev.isDeleted ? 'line-through' : ''}">${ev.description}</p>${ev.isDeleted && ev.cancellationOrderNo ? `<p class="text-[10px] text-rose-800 font-bold mt-1">Reversal Order: ${ev.cancellationOrderNo}</p>` : ''}
             </div>
           `).join('')}
         </div>
@@ -1258,8 +1282,8 @@ function printSingleEmployee(emp) {
           ${emp.events.map(ev => `
             <tr style="${ev.isDeleted ? 'color: #888; text-decoration: line-through;' : ''}">
               <td style="border: 1px solid #cbd5e1; padding: 6px;">${formatDate(ev.date)}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${ev.type}${ev.isDeleted ? '(CANCELLED)' : ''}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 6px;">${ev.orderNo}</td>
+              <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${ev.type}${ev.isDeleted ? ' (CANCELLED)' : ''}</td>
+              <td style="border: 1px solid #cbd5e1; padding: 6px;">${ev.orderNo}${ev.isDeleted && ev.cancellationOrderNo ? `<br><small style="color: #991b1b;">Rev: ${ev.cancellationOrderNo}</small>` : ''}</td>
               <td style="border: 1px solid #cbd5e1; padding: 6px;">${ev.description}</td>
             </tr>
           `).join('')}
@@ -1380,7 +1404,10 @@ function renderEmployeeDashboard() {
           <td class="py-2.5 px-3 font-mono font-black text-center ${isCancelled ? 'line-through text-slate-400' : (isCredit ? 'text-emerald-800' : 'text-rose-800')}">
             ${isCredit ? '+' : '-'}${l.days}
           </td>
-          <td class="py-2.5 px-3 text-slate-900 font-bold ${isCancelled ? 'line-through text-slate-400' : ''}">${l.orderNo}</td>
+          <td class="py-2.5 px-3 text-slate-900 font-bold">
+            <div class="${isCancelled ? 'line-through text-slate-400' : ''}">${l.orderNo}</div>
+            ${isCancelled && l.cancellationOrderNo ? `<div class="text-[10px] text-rose-800 font-extrabold mt-0.5">Rev Order: ${l.cancellationOrderNo}</div>` : ''}
+          </td>
           <td class="py-2.5 px-3 text-slate-700 font-semibold ${isCancelled ? 'line-through text-slate-400' : ''}">${l.period || '--'}</td>
         </tr>
       `;
@@ -1408,7 +1435,7 @@ function renderEmployeeDashboard() {
           </div>
           <p class="text-xs font-bold mt-1.5 ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'}">${ev.description}</p>
           <div class="mt-2 pt-2 border-t border-slate-200 text-xs font-bold text-slate-600 flex justify-between items-center">
-            <span><strong>Order Ref:</strong> ${ev.orderNo}</span>
+            <span><strong>Order Ref:</strong> ${ev.orderNo} ${isCancelled && ev.cancellationOrderNo ? `<span class="text-rose-800 ml-2 font-black">(Rev: ${ev.cancellationOrderNo})</span>` : ''}</span>
             <span><strong>Attesting Office:</strong> ${ev.authority}</span>
           </div>
         </div>
