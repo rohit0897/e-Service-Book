@@ -51,3 +51,15 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+/* Cancelled & Reverted Service Event Styling */
+.line-through {
+  text-decoration: line-through !important;
+}
+
+.bg-rose-50\/75 {
+  background-color: rgba(255, 241, 242, 0.75) !important;
+}
+
+.border-rose-300 {
+  border-color: #fca5a5 !important;
+}
