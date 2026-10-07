@@ -93,3 +93,22 @@ table td:last-child {
     padding-right: 15px !important;
     text-align: center !important;
 }
+/* Eye icon cut hone se bachane ka final fix */
+#employeeTable {
+  min-width: 1300px !important;
+  width: 100% !important;
+}
+
+#employeeTable th:last-child,
+#employeeTable td:last-child {
+  min-width: 75px !important;
+  padding-right: 20px !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+/* Parent container scrolling enable karne ke liye */
+div:has(> #employeeTable) {
+  overflow-x: auto !important;
+  width: 100% !important;
+}
