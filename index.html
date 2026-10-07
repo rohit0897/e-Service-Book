@@ -1,5 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+<style>
+  /* 1. Leave Table के रिमार्क्स (Sanction Order / Grounds) को कॉलम में रैप करने के लिए */
+  #leaveLedgerTableBody td:nth-child(5),
+  #empSelfLeaveTableBody td:nth-child(5) {
+    max-width: 220px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* 2. Events Modal के लंबे विवरण / रिमार्क्स को रैप करने के लिए */
+  #eventsListContainer p,
+  #empSelfEventsContainer p {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+</style>
+</head>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1182,7 +1201,7 @@
                   <th class="py-2 px-2.5">Type</th>
                   <th class="py-2 px-2.5">Action</th>
                   <th class="py-2 px-2.5 text-center">Days</th>
-                  <th class="py-2 px-2.5">Sanction / Ground</th>
+                  <th class="py-2 px-2.5 w-64 max-w-xs">Sanction / Ground</th>
                   <th class="py-2 px-2.5">Period</th>
                   <th class="py-2 px-2.5 text-center">Delete</th>
                 </tr>
