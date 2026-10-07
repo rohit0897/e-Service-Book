@@ -554,23 +554,44 @@
           <span class="text-xs font-bold text-slate-600">e-Service Book Ledger</span>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="w-full overflow-x-auto">
           <table class="w-full text-left text-xs border-collapse">
             <thead>
-              <tr class="bg-slate-100 text-slate-900 border-b-2 border-slate-300 uppercase font-black text-[11px] tracking-wider whitespace-nowrap">
-                <th class="py-3 px-3 text-center w-10">
-                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAllEmployees(this.checked)" class="rounded border-slate-400 text-gov-blue focus:ring-gov-blue cursor-pointer h-4 w-4" title="Select all for bulk operations">
+              <tr class="bg-slate-100 text-slate-900 border-b-2 border-slate-300 uppercase font-black text-[11px] tracking-wider">
+                <!-- 1. Select Checkbox (3%) -->
+                <th class="w-[3%] py-2.5 px-1 text-center">
+                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAllEmployees(this.checked)" class="rounded border-slate-400 text-gov-blue focus:ring-gov-blue cursor-pointer h-3.5 w-3.5" title="Select all for bulk operations">
                 </th>
-                <th class="py-2 px-2 text-center">Emp ID</th>
-                <th class="py-2 px-2 text-left">Name & Contact</th>
-                <th class="py-2 px-2 text-center">Date of Birth</th>
-                <th class="py-2 px-2 text-center">Designation & Pay Details</th>
-                <th class="py-2 px-2 text-center">Basic Pay</th>
-                <th class="py-2 px-2 text-center">DOR</th>
-                <th class="py-2 px-2 text-center">Increment Due</th>
-                <th class="py-2 px-2 text-center">Leave</th>
-                <th class="py-2 px-2 text-center">Events</th>
-                <th class="py-2 pl-2 pr-6 text-center">View Dossier</th>
+
+                <!-- 2. Emp ID (9%) -->
+                <th class="w-[9%] py-2.5 px-1.5 text-left">Emp ID</th>
+
+                <!-- 3. Name & Contact (18%) - मुख्य जानकारी को ज्यादा जगह -->
+                <th class="w-[18%] py-2.5 px-1.5 text-left">Name & Contact</th>
+
+                <!-- 4. DOB (8%) -->
+                <th class="w-[8%] py-2.5 px-1.5 text-center leading-tight">Date of Birth</th>
+
+                <!-- 5. Designation & Pay (18%) -->
+                <th class="w-[18%] py-2.5 px-1.5 text-center leading-tight">Designation & Pay</th>
+
+                <!-- 6. Basic Pay (8%) -->
+                <th class="w-[8%] py-2.5 px-1 text-center">Basic Pay</th>
+
+                <!-- 7. DOR (8%) -->
+                <th class="w-[8%] py-2.5 px-1 text-center">DOR</th>
+
+                <!-- 8. Increment Due (9%) -->
+                <th class="w-[9%] py-2.5 px-1 text-center leading-tight">Increment Due</th>
+
+                <!-- 9. Leave (6%) -->
+                <th class="w-[6%] py-2.5 px-1 text-center">Leave</th>
+
+                <!-- 10. Events (5%) -->
+                <th class="w-[5%] py-2.5 px-1 text-center">Events</th>
+
+                <!-- 11. View Dossier (8%) -->
+                <th class="w-[8%] py-2.5 px-1.5 text-center leading-tight">View Dossier</th>
               </tr>
             </thead>
             <tbody id="employeeTableBody" class="divide-y divide-slate-200"></tbody>
@@ -1344,25 +1365,30 @@
   </div>
 
   <!-- ================= VIEW RECORD DETAILS MODAL ================= -->
-  <div id="viewRecordModal" class="fixed inset-0 crisp-modal-backdrop z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border-2 border-slate-300 overflow-hidden">
-      <div class="bg-gov-navy px-6 py-4 text-white flex justify-between items-center border-b-2 border-gov-gold">
+  <div id="viewRecordModal" class="fixed inset-0 crisp-modal-backdrop z-50 hidden flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border-2 border-slate-300 overflow-hidden my-auto flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header (Cross Button hamesha screen par dikhega) -->
+      <div class="bg-gov-navy px-5 py-3.5 text-white flex justify-between items-center border-b-2 border-gov-gold shrink-0 sticky top-0 z-10">
         <h3 class="text-base font-black flex items-center">
           <i class="fa-solid fa-file-lines text-amber-400 mr-2"></i> Official Service Book Extract
         </h3>
-        <button onclick="closeViewRecordModal()" class="text-slate-300 hover:text-white text-xl font-bold">
+        <button type="button" onclick="closeViewRecordModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-rose-600 text-slate-200 hover:text-white flex items-center justify-center text-lg font-bold transition-colors">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <div class="p-6 space-y-4 text-xs font-medium" id="viewModalContent"></div>
+      <!-- Modal Body (Data lamba hone par yeh hissa andar scroll hoga) -->
+      <div class="p-5 sm:p-6 space-y-4 text-xs font-medium overflow-y-auto flex-1" id="viewModalContent"></div>
 
-      <div class="bg-slate-50 px-6 py-3 border-t-2 border-slate-200 flex justify-between items-center">
-        <span class="text-xs font-bold text-slate-600">Ministry of External Affairs • Regional Passport Office Delhi</span>
-        <button onclick="printSingleRecordModal()" class="px-4 py-1.5 bg-gov-blue hover:bg-gov-navy text-white font-bold rounded-lg text-xs flex items-center">
+      <!-- Modal Footer (Print Button hamesha visible rahega) -->
+      <div class="bg-slate-50 px-5 py-3 border-t-2 border-slate-200 flex justify-between items-center shrink-0">
+        <span class="text-[11px] font-bold text-slate-600 truncate mr-2">Ministry of External Affairs • Regional Passport Office Delhi</span>
+        <button type="button" onclick="printSingleRecordModal()" class="px-4 py-1.5 bg-gov-blue hover:bg-gov-navy text-white font-bold rounded-lg text-xs flex items-center shrink-0 shadow-sm transition-colors">
           <i class="fa-solid fa-print mr-1.5"></i> Print Extract
         </button>
       </div>
+
     </div>
   </div>
 
