@@ -294,7 +294,7 @@ function handleSecurityReAuthSubmit(e) {
   }
 }
 
-function executePendingSecurityAction() {
+async function executePendingSecurityAction() {
   if (!pendingSecurityAction) return;
   const { type, data } = pendingSecurityAction;
 
@@ -316,9 +316,15 @@ function executePendingSecurityAction() {
   else if (type === 'BULK_DELETE') {
     const idsToDelete = data.ids || [];
     const count = idsToDelete.length;
+    
+    // Supabase se delete karein
+    if (typeof deleteEmployeeFromSupabase === 'function') {
+      await deleteEmployeeFromSupabase(idsToDelete);
+    }
+
     employees = employees.filter(emp => !idsToDelete.includes(emp.id));
     selectedEmployeeIds.clear();
-    saveEmployees();
+    await saveEmployees();
     applyTableFilters();
     showToast(`2FA Verified: ${count} employee record(s) deleted permanently.`, "info");
   }
