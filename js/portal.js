@@ -493,6 +493,14 @@ function openAddEmployeeModal() {
   document.getElementById('formEmpId').value = `CPO-DEL-${nextNum}`;
   document.getElementById('formEmpPassword').value = "pass123";
   document.getElementById('formDor').value = "";
+
+  // Leave balance fields reset (Default 0)
+  document.getElementById('formInitialEL').value = "0";
+  document.getElementById('formInitialHPL').value = "0";
+  document.getElementById('formInitialCCL').value = "0";
+  document.getElementById('formInitialEL').disabled = false;
+  document.getElementById('formInitialHPL').disabled = false;
+  document.getElementById('formInitialCCL').disabled = false;
   
   populateIncrementDueDropdown();
   document.getElementById('employeeModal').classList.remove('hidden');
@@ -521,6 +529,14 @@ function editEmployeeRecord(index) {
   document.getElementById('formPhone').value = emp.phone || '';
   document.getElementById('formEmail').value = emp.email || '';
   document.getElementById('formEmpPassword').value = emp.password || "pass123";
+
+  const curBal = calculateLeaveBalances(emp);
+  document.getElementById('formInitialEL').value = curBal.EL || 0;
+  document.getElementById('formInitialHPL').value = curBal.HPL || 0;
+  document.getElementById('formInitialCCL').value = curBal.CCL || 0;
+  document.getElementById('formInitialEL').disabled = true;
+  document.getElementById('formInitialHPL').disabled = true;
+  document.getElementById('formInitialCCL').disabled = true;
 
   document.getElementById('employeeModal').classList.remove('hidden');
 }
@@ -1001,11 +1017,7 @@ function handleExcelFileUpload(event) {
 
         const existingIdx = employees.findIndex(e => e.id.toLowerCase() === empId.toLowerCase());
         const existingEvents = existingIdx >= 0 ? (employees[existingIdx].events || []) : [];
-        const existingLeave = existingIdx >= 0 ? (employees[existingIdx].leaveLedger || []) : [
-          { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Bulk Ingestion Opening Credit", period: "Opening", isDeleted: false },
-          { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Bulk Ingestion Opening Credit", period: "Opening", isDeleted: false },
-          { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Bulk Ingestion Opening Credit", period: "Opening", isDeleted: false }
-        ];
+        const existingLeave = existingIdx >= 0 ? (employees[existingIdx].leaveLedger || []) : [];
 
         const newEmployeeObj = {
           id: empId,
