@@ -990,6 +990,27 @@
             <input type="password" id="formEmpPassword" required class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-900 focus:border-gov-blue outline-none" value="pass123">
           </div>
         </div>
+        <!-- Opening Leave Balances Section -->
+        <div class="pt-3 border-t-2 border-slate-200">
+          <label class="block font-extrabold text-slate-900 text-xs mb-2">
+            <i class="fa-solid fa-calendar-check text-emerald-700 mr-1"></i> Opening Leave Balances (आरंभिक छुट्टी शेष)
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div>
+              <label class="block font-bold text-emerald-900 mb-1">Earned Leave (EL)</label>
+              <input type="number" id="formInitialEL" min="0" max="300" value="0" class="w-full px-3 py-1.5 border-2 border-emerald-300 rounded-lg font-bold text-slate-900 focus:border-gov-blue outline-none" placeholder="0">
+            </div>
+            <div>
+              <label class="block font-bold text-blue-900 mb-1">Half Pay Leave (HPL)</label>
+              <input type="number" id="formInitialHPL" min="0" max="300" value="0" class="w-full px-3 py-1.5 border-2 border-blue-300 rounded-lg font-bold text-slate-900 focus:border-gov-blue outline-none" placeholder="0">
+            </div>
+            <div>
+              <label class="block font-bold text-purple-900 mb-1">Child Care Leave (CCL)</label>
+              <input type="number" id="formInitialCCL" min="0" max="730" value="0" class="w-full px-3 py-1.5 border-2 border-purple-300 rounded-lg font-bold text-slate-900 focus:border-gov-blue outline-none" placeholder="0">
+            </div>
+          </div>
+          <span class="text-[10px] text-slate-500 font-semibold block mt-1">Naye employee ke liye opening balance darj karein (yadi koi leave nahi hai to 0 chhod dein).</span>
+        </div>
 
         <div class="pt-4 border-t-2 border-slate-200 flex justify-end space-x-2">
           <button type="button" onclick="closeEmployeeModal()" class="px-4 py-2 text-xs font-bold rounded-lg border-2 border-slate-300 text-slate-800 hover:bg-slate-100 transition-colors">
