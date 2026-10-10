@@ -407,24 +407,24 @@ function renderAdminTable(filteredData = null) {
     tr.className = `hover:bg-slate-50 transition-colors border-b border-slate-300 ${isChecked ? 'bg-blue-50/70' : ''}`;
     
     tr.innerHTML = `
-      <td class="py-3 px-3 text-center">
+      <td class="py-3 px-1 text-center">
         <input type="checkbox" value="${emp.id}" ${isChecked ? 'checked' : ''} onchange="toggleEmployeeSelection('${emp.id}', this.checked)" class="emp-row-checkbox rounded border-slate-400 text-gov-blue focus:ring-gov-blue cursor-pointer h-4 w-4">
       </td>
-      <td class="py-3 px-3 font-mono font-black text-gov-navy text-center break-all">${emp.id}</td>
-      <td class="py-3 px-3 text-slate-900 break-words">
+      <td class="py-3 px-2 font-mono font-black text-gov-navy text-center whitespace-nowrap">${emp.id}</td>
+      <td class="py-3 px-3 text-slate-900">
         <div class="font-extrabold text-gov-navy break-words">${emp.name}</div>
         <div class="text-[11px] text-slate-600 font-semibold flex items-start gap-1 mt-0.5 break-all">
           <i class="fa-regular fa-envelope text-[10px] text-slate-400 mt-0.5 shrink-0"></i> 
           <span class="break-all">${emp.email || '--'}</span>
         </div>
-        <div class="text-[11px] text-slate-600 font-semibold flex items-center gap-1 break-all">
+        <div class="text-[11px] text-slate-600 font-semibold flex items-center gap-1 mt-0.5 whitespace-nowrap">
           <i class="fa-solid fa-phone text-[10px] text-slate-400 shrink-0"></i> +91 ${emp.phone || '--'}
         </div>
       </td>
-      <td class="py-3 px-3 font-semibold text-slate-800 text-center break-words">
+      <td class="py-3 px-2 font-semibold text-slate-800 text-center whitespace-nowrap">
         ${formatDate(emp.dob)}
       </td>
-      <td class="py-3 px-3 text-slate-900 text-center break-words">
+      <td class="py-3 px-2 text-slate-900 text-center">
         <div class="font-bold break-words">${emp.designation}</div>
         <div class="flex items-center justify-center gap-1.5 mt-0.5 flex-wrap">
           <span class="inline-block px-1.5 py-0.2 bg-slate-100 text-slate-800 rounded text-[10px] font-extrabold border border-slate-300">
@@ -435,30 +435,30 @@ function renderAdminTable(filteredData = null) {
           </span>
         </div>
       </td>
-      <td class="py-3 px-3 font-black text-gov-navy text-center break-words">
+      <td class="py-3 px-2 font-black text-gov-navy text-center whitespace-nowrap">
         ₹${Number(emp.basicPay || 0).toLocaleString('en-IN')}
       </td>
-      <td class="py-3 px-3 text-center font-bold text-amber-900 break-words">
+      <td class="py-3 px-2 text-center font-bold text-amber-900 whitespace-nowrap">
         ${formatDate(emp.dor)}
       </td>
-      <td class="py-3 px-3 text-center break-words">
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 text-emerald-950 border border-emerald-300">
+      <td class="py-3 px-2 text-center whitespace-nowrap">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 text-emerald-950 border border-emerald-300 whitespace-nowrap">
           <i class="fa-solid fa-calendar-day mr-1 text-emerald-700 shrink-0"></i> ${emp.incrementDue || '01 Jul 2027'}
         </span>
       </td>
-      <td class="py-3 px-3 text-center">
-        <button onclick="openLeaveModal(${realIndex})" title="Manage Leave Ledger (EL, HPL, CCL)" class="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-950 rounded-lg font-black text-xs border border-emerald-400 inline-flex items-center transition-colors">
-          <i class="fa-solid fa-calendar-check mr-1.5 text-emerald-800 shrink-0"></i> Leave
+      <td class="py-3 px-2 text-center whitespace-nowrap">
+        <button onclick="openLeaveModal(${realIndex})" title="Manage Leave Ledger (EL, HPL, CCL)" class="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-950 rounded-lg font-black text-xs border border-emerald-400 inline-flex items-center justify-center transition-colors whitespace-nowrap">
+          <i class="fa-solid fa-calendar-check mr-1.5 text-emerald-800"></i> Leave
         </button>
       </td>
-      <td class="py-3 px-3 text-center">
-        <button onclick="openEventsModal(${realIndex})" title="Add / View Service Events" class="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-950 rounded-lg font-black text-xs border border-amber-400 inline-flex items-center transition-colors">
-          <i class="fa-solid fa-timeline mr-1.5 text-amber-800 shrink-0"></i> Events
+      <td class="py-3 px-2 text-center whitespace-nowrap">
+        <button onclick="openEventsModal(${realIndex})" title="Add / View Service Events" class="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-950 rounded-lg font-black text-xs border border-amber-400 inline-flex items-center justify-center transition-colors whitespace-nowrap">
+          <i class="fa-solid fa-timeline mr-1.5 text-amber-800"></i> Events
         </button>
       </td>
-      <td class="py-3 px-4 text-center align-middle">
-        <button onclick="viewEmployeeRecord(${realIndex})" title="View Service Book Dossier" class="h-9 w-9 rounded-lg bg-blue-100 text-blue-900 hover:bg-blue-200 border border-blue-300 inline-flex items-center justify-center transition-colors font-bold shrink-0">
-          <i class="fa-solid fa-eye text-sm leading-none flex items-center justify-center"></i>
+      <td class="py-3 px-2 text-center align-middle whitespace-nowrap">
+        <button onclick="viewEmployeeRecord(${realIndex})" title="View Service Book Dossier" class="h-8 w-8 rounded-lg bg-blue-100 text-blue-900 hover:bg-blue-200 border border-blue-300 inline-flex items-center justify-center transition-colors font-bold shrink-0">
+          <i class="fa-solid fa-eye text-sm"></i>
         </button>
       </td>
     `;
