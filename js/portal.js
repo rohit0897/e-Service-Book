@@ -954,7 +954,7 @@ function renderLeaveLedgerTable() {
             <div class="text-[10px] text-rose-800 font-extrabold mt-0.5">Rev Order: ${item.cancellationOrderNo}</div>
           ` : ''}
         </td>
-        <td class="py-2 px-2.5 text-slate-700 font-medium text-xs ${isCancelled ? 'line-through text-slate-400' : ''}">${item.period}</td>
+        <td class="py-2 px-2.5 text-slate-700 font-medium text-xs break-words whitespace-normal ${isCancelled ? 'line-through text-slate-400' : ''}">${item.period}</td>
         <td class="py-2 px-2.5 text-center">
           ${!isCancelled ? `
             <button onclick="deleteLeaveTransaction('${item.id}')" title="Cancel & Reverse Leave" class="text-rose-600 hover:text-rose-800 font-bold">
