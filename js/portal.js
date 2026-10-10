@@ -554,6 +554,54 @@ async function handleEmployeeFormSubmit(e) {
 
   const existingRecord = (idx >= 0) ? employees[idx] : null;
 
+  // Box mein daali gayi actual values read karein
+  const inputEL = Number(document.getElementById('formInitialEL').value) || 0;
+  const inputHPL = Number(document.getElementById('formInitialHPL').value) || 0;
+  const inputCCL = Number(document.getElementById('formInitialCCL').value) || 0;
+
+  let initialLeaves = [];
+  const todayDate = new Date().toISOString().split('T')[0];
+
+  // Agar value 0 se badi hogi tabhi leave add hogi
+  if (inputEL > 0) {
+    initialLeaves.push({
+      id: `LV-${Date.now()}-1`,
+      date: todayDate,
+      action: "Credit",
+      type: "EL",
+      days: inputEL,
+      orderNo: "Initial Credit (Opening Balance)",
+      period: "Opening",
+      isDeleted: false
+    });
+  }
+
+  if (inputHPL > 0) {
+    initialLeaves.push({
+      id: `LV-${Date.now()}-2`,
+      date: todayDate,
+      action: "Credit",
+      type: "HPL",
+      days: inputHPL,
+      orderNo: "Initial Credit (Opening Balance)",
+      period: "Opening",
+      isDeleted: false
+    });
+  }
+
+  if (inputCCL > 0) {
+    initialLeaves.push({
+      id: `LV-${Date.now()}-3`,
+      date: todayDate,
+      action: "Credit",
+      type: "CCL",
+      days: inputCCL,
+      orderNo: "Initial CCL Allocation",
+      period: "Opening",
+      isDeleted: false
+    });
+  }
+
   const newRecord = {
     id: document.getElementById('formEmpId').value.trim(),
     name: document.getElementById('formFullName').value.trim(),
@@ -571,15 +619,7 @@ async function handleEmployeeFormSubmit(e) {
     email: document.getElementById('formEmail').value.trim(),
     password: document.getElementById('formEmpPassword').value.trim() || 'pass123',
     events: existingRecord ? (existingRecord.events || []) : [],
-    leaveLedger: existingRecord ? (existingRecord.leaveLedger || [
-      { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Initial Credit (Joining/Balance)", period: "Opening", isDeleted: false },
-      { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Initial Credit (Joining/Balance)", period: "Opening", isDeleted: false },
-      { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Initial CCL Allocation", period: "Current Year", isDeleted: false }
-    ]) : [
-      { id: `LV-${Date.now()}-1`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "EL", days: 30, orderNo: "Initial Credit (Joining/Balance)", period: "Opening", isDeleted: false },
-      { id: `LV-${Date.now()}-2`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "HPL", days: 20, orderNo: "Initial Credit (Joining/Balance)", period: "Opening", isDeleted: false },
-      { id: `LV-${Date.now()}-3`, date: new Date().toISOString().split('T')[0], action: "Credit", type: "CCL", days: 15, orderNo: "Initial CCL Allocation", period: "Current Year", isDeleted: false }
-    ]
+    leaveLedger: existingRecord ? (existingRecord.leaveLedger || []) : initialLeaves
   };
 
   if (idx === -1) {
@@ -771,12 +811,11 @@ function renderEventsTimelineList() {
             <span class="text-[10px] text-rose-700 font-extrabold italic">Cancelled</span>
           `}
         </div>
-        <p class="text-xs font-bold mt-1.5 leading-relaxed ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'}">${evt.description}</p>
-        <div class="mt-2 pt-2 border-t border-slate-200 flex flex-wrap justify-between items-center text-[11px] text-slate-700 font-semibold">
-          <span><strong>Order:</strong> ${evt.orderNo}</span>
-          ${isCancelled && evt.cancellationOrderNo ? `<span class="text-rose-800 font-bold"><strong>Reversal Order:</strong> ${evt.cancellationOrderNo}</span>` : ''}
-          <span><strong>Attested by:</strong> ${evt.authority}</span>
-        </div>
+        <p class="text-xs font-bold mt-1.5 leading-relaxed break-words ${isCancelled ? 'line-through text-slate-500' : 'text-slate-900'}">${evt.description}</p>
+          <div class="mt-2 pt-2 border-t border-slate-200 flex flex-wrap justify-between items-center text-[11px] text-slate-700 font-semibold gap-1">
+            <span class="break-all"><strong>Order:</strong> ${evt.orderNo}</span>${isCancelled && evt.cancellationOrderNo ? `<span class="text-rose-800 font-bold break-all"><strong>Reversal Order:</strong> ${evt.cancellationOrderNo}</span>` : ''}
+            <span class="break-words"><strong>Attested by:</strong> ${evt.authority}</span>
+          </div>
       </div>
     `;
   }).join('');
@@ -909,7 +948,7 @@ function renderLeaveLedgerTable() {
         <td class="py-2 px-2.5 font-mono font-black text-center ${isCancelled ? 'line-through text-slate-400' : (isCredit ? 'text-emerald-800' : 'text-rose-800')}">
           ${sign}${item.days}
         </td>
-        <td class="py-2 px-2.5 text-slate-900 font-semibold max-w-[200px]" title="${item.orderNo}">
+        <td class="py-2 px-2.5 text-slate-900 font-semibold break-words" title="${item.orderNo}">
           <div class="${isCancelled ? 'line-through text-slate-400' : ''}">${item.orderNo}</div>
           ${isCancelled && item.cancellationOrderNo ? `
             <div class="text-[10px] text-rose-800 font-extrabold mt-0.5">Rev Order: ${item.cancellationOrderNo}</div>
