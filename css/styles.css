@@ -97,13 +97,18 @@
   overflow-wrap: anywhere !important;
 }
 
-/* Admin Employee Table layout strict lock */
+/* Admin Employee Table Layout & Overlap Prevention */
 #view-admin table {
-  table-layout: fixed !important;
+  table-layout: auto !important;
+  min-width: 1100px !important;
   width: 100% !important;
 }
 
-#employeeTableBody td {
-  word-break: break-word;
-  overflow-wrap: anywhere;
+/* Emp ID (2nd), Name & Contact (3rd), aur Designation (5th) columns par auto-wrap */
+#employeeTableBody td:nth-child(2),
+#employeeTableBody td:nth-child(3),
+#employeeTableBody td:nth-child(5) {
+  white-space: normal !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
 }
