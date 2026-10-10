@@ -63,3 +63,34 @@
 .border-rose-300 {
   border-color: #fca5a5 !important;
 }
+/* Event & Leave text wrapping fixes */
+#eventsListContainer,
+#empSelfEventsContainer,
+#leaveLedgerTableBody,
+#empSelfLeaveTableBody {
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+#eventsListContainer p,
+#empSelfEventsContainer p,
+#eventsListContainer span,
+#empSelfEventsContainer span {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Leave tables layout fix */
+#leaveModal table,
+#view-employee table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+#leaveLedgerTableBody td,
+#empSelfLeaveTableBody td {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
