@@ -411,13 +411,14 @@ function renderAdminTable(filteredData = null) {
         <input type="checkbox" value="${emp.id}" ${isChecked ? 'checked' : ''} onchange="toggleEmployeeSelection('${emp.id}', this.checked)" class="emp-row-checkbox rounded border-slate-400 text-gov-blue focus:ring-gov-blue cursor-pointer h-4 w-4">
       </td>
       <td class="py-3 px-3 font-mono font-black text-gov-navy whitespace-nowrap">${emp.id}</td>
-      <td class="py-3 px-3 text-slate-900 whitespace-nowrap">
-        <div class="font-extrabold text-gov-navy">${emp.name}</div>
-        <div class="text-[11px] text-slate-600 font-semibold flex items-center gap-1 mt-0.5">
-          <i class="fa-regular fa-envelope text-[10px] text-slate-400"></i> ${emp.email || '--'}
+      <td class="py-3 px-3 text-slate-900">
+        <div class="font-extrabold text-gov-navy break-words">${emp.name}</div>
+        <div class="text-[11px] text-slate-600 font-semibold flex items-start gap-1 mt-0.5 break-all">
+          <i class="fa-regular fa-envelope text-[10px] text-slate-400 mt-0.5 shrink-0"></i> 
+          <span class="break-all">${emp.email || '--'}</span>
         </div>
         <div class="text-[11px] text-slate-600 font-semibold flex items-center gap-1">
-          <i class="fa-solid fa-phone text-[10px] text-slate-400"></i> +91 ${emp.phone || '--'}
+          <i class="fa-solid fa-phone text-[10px] text-slate-400 shrink-0"></i> +91 ${emp.phone || '--'}
         </div>
       </td>
       <td class="py-3 px-3 font-semibold text-slate-800 whitespace-nowrap">
