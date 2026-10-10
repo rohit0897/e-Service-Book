@@ -513,7 +513,9 @@ function editEmployeeRecord(index) {
 
   document.getElementById('modalTitle').innerText = `Edit Service Book: ${emp.id}`;
   document.getElementById('formEmployeeIndex').value = index;
-  document.getElementById('formEmpId').value = emp.id;
+  // Yeh nayi line add karein purani ID track karne ke liye:
+  document.getElementById('employeeForm').dataset.oldEmpId = emp.id;
+  document.getElementById('formEmpId').value = emp.id;  document.getElementById('formEmpId').value = emp.id;
   document.getElementById('formFullName').value = emp.name;
   document.getElementById('formDob').value = emp.dob || '';
   document.getElementById('formFatherName').value = emp.fatherName || '';
@@ -632,6 +634,24 @@ async function handleEmployeeFormSubmit(e) {
     employees.unshift(newRecord);
     showToast(`Employee ${newRecord.name} added. Next Increment: ${newRecord.incrementDue}`, "success");
   } else {
+    // Purani ID check karein
+    const oldId = document.getElementById('employeeForm').dataset.oldEmpId || (existingRecord ? existingRecord.id : null);
+    
+    // Agar employee ID badli gayi hai
+    if (oldId && oldId.toLowerCase() !== newRecord.id.toLowerCase()) {
+      // Check karein nayi ID kisi aur employee ke paas pehle se toh nahi hai
+      const idConflict = employees.some((item, i) => i !== idx && item.id.toLowerCase() === newRecord.id.toLowerCase());
+      if (idConflict) {
+        showToast(`Employee ID ${newRecord.id} pehle se kisi aur employee ki hai!`, "error");
+        return;
+      }
+      
+      // Supabase database se purani ID hataayein taaki naya duplicate na bane
+      if (typeof deleteEmployeeFromSupabase === 'function') {
+        await deleteEmployeeFromSupabase([oldId]);
+      }
+    }
+
     employees[idx] = newRecord;
     showToast(`Service Book for ${newRecord.name} updated successfully.`, "success");
   }
