@@ -587,40 +587,19 @@
           <table class="w-full text-left text-xs border-collapse">
             <thead>
               <tr class="bg-slate-100 text-slate-900 border-b-2 border-slate-300 uppercase font-black text-[11px] tracking-wider">
-                <!-- 1. Select Checkbox (Fixed) -->
-                <th class="w-10 min-w-[40px] py-2.5 px-1 text-center">
-                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAllEmployees(this.checked)" class="rounded border-slate-400 text-gov-blue focus:ring-gov-blue cursor-pointer h-3.5 w-3.5" title="Select all for bulk operations">
+                <th class="w-10 py-2.5 px-1 text-center">
+                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAllEmployees(this.checked)" class="rounded border-slate-400 text-gov-blue focus:ring-gov-blue cursor-pointer h-3.5 w-3.5">
                 </th>
-
-                <!-- 2. Emp ID (Fixed) -->
-                <th class="w-28 min-w-[110px] py-2.5 px-2 text-center whitespace-nowrap">Emp ID</th>
-
-                <!-- 3. Name & Contact (Auto Flexible) -->
-                <th class="min-w-[200px] py-2.5 px-3 text-left">Name & Contact</th>
-
-                <!-- 4. DOB (Fixed) -->
-                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center leading-tight whitespace-nowrap">Date of Birth</th>
-
-                <!-- 5. Designation & Pay (Flexible) -->
-                <th class="min-w-[170px] py-2.5 px-2 text-center leading-tight">Designation & Pay</th>
-
-                <!-- 6. Basic Pay (Fixed) -->
-                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center whitespace-nowrap">Basic Pay</th>
-
-                <!-- 7. DOR (Fixed) -->
-                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center whitespace-nowrap">DOR</th>
-
-                <!-- 8. Increment Due (Fixed) -->
-                <th class="w-28 min-w-[115px] py-2.5 px-2 text-center leading-tight whitespace-nowrap">Increment Due</th>
-
-                <!-- 9. Leave Button (Fixed Width - ab chhota nahi hoga) -->
-                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center whitespace-nowrap">Leave</th>
-
-                <!-- 10. Events Button (Fixed Width - ab chhota nahi hoga) -->
-                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center whitespace-nowrap">Events</th>
-
-                <!-- 11. View Dossier (Fixed Width) -->
-                <th class="w-20 min-w-[75px] py-2.5 px-2 text-center leading-tight whitespace-nowrap">Dossier</th>
+                <th class="w-24 py-2.5 px-1 text-center whitespace-nowrap">Emp ID</th>
+                <th class="py-2.5 px-2 text-left">Name & Contact</th>
+                <th class="w-24 py-2.5 px-1 text-center whitespace-nowrap">DOB</th>
+                <th class="w-48 py-2.5 px-2 text-center whitespace-nowrap">Designation & Pay</th>
+                <th class="w-24 py-2.5 px-1 text-center whitespace-nowrap">Basic Pay</th>
+                <th class="w-24 py-2.5 px-1 text-center whitespace-nowrap">DOR</th>
+                <th class="w-28 py-2.5 px-1 text-center whitespace-nowrap">Increment Due</th>
+                <th class="w-24 py-2.5 px-1 text-center whitespace-nowrap">Leave</th>
+                <th class="w-24 py-2.5 px-1 text-center whitespace-nowrap">Events</th>
+                <th class="w-16 py-2.5 px-1 text-center whitespace-nowrap">Dossier</th>
               </tr>
             </thead>
             <tbody id="employeeTableBody" class="divide-y divide-slate-200"></tbody>
