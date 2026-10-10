@@ -410,7 +410,7 @@ function renderAdminTable(filteredData = null) {
       <td class="py-3 px-1 text-center">
         <input type="checkbox" value="${emp.id}" ${isChecked ? 'checked' : ''} onchange="toggleEmployeeSelection('${emp.id}', this.checked)" class="emp-row-checkbox rounded border-slate-400 text-gov-blue focus:ring-gov-blue cursor-pointer h-4 w-4">
       </td>
-      <td class="py-3 px-1 font-mono font-black text-gov-navy text-center whitespace-nowrap">${emp.id}</td>
+      <td class="py-3 px-2 font-mono font-black text-gov-navy text-center max-w-[120px] break-all whitespace-normal">${emp.id}</td>
       <td class="py-3 px-2 text-slate-900">
         <div class="font-extrabold text-gov-navy break-words">${emp.name}</div>
         <div class="text-[11px] text-slate-600 font-semibold flex items-start gap-1 mt-0.5">
