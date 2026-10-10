@@ -1,10 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <style>
-  /* 1. Leave Table के रिमार्क्स (Sanction Order / Grounds) को कॉलम में रैप करने के लिए */
+  /* Leave Table ke dono columns ko fix width aur text-wrap dene ke liye */
   #leaveLedgerTableBody td:nth-child(5),
   #empSelfLeaveTableBody td:nth-child(5) {
-    max-width: 220px !important;
+    width: 32% !important;
+    max-width: 240px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #leaveLedgerTableBody td:nth-child(6),
+  #empSelfLeaveTableBody td:nth-child(6) {
+    width: 24% !important;
+    max-width: 180px !important;
     white-space: normal !important;
     word-break: break-word !important;
     overflow-wrap: anywhere !important;
@@ -1215,16 +1225,16 @@
             <i class="fa-solid fa-clock-rotate-left text-slate-600 mr-1.5"></i> Leave History Ledger
           </h4>
           <div class="overflow-x-auto border-2 border-slate-200 rounded-lg">
-            <td class="py-2 px-2.5 text-slate-900 font-semibold max-w-[200px]" title="${item.orderNo}">
+            <table class="w-full text-left text-xs border-collapse">
               <thead>
                 <tr class="bg-slate-100 text-slate-900 border-b-2 border-slate-300 uppercase font-black text-[11px]">
-                  <th class="py-2 px-2.5">Date</th>
-                  <th class="py-2 px-2.5">Type</th>
-                  <th class="py-2 px-2.5">Action</th>
-                  <th class="py-2 px-2.5 text-center">Days</th>
-                  <th class="py-2 px-2.5 w-64 max-w-xs">Sanction / Ground</th>
-                  <th class="py-2 px-2.5">Period</th>
-                  <th class="py-2 px-2.5 text-center">Delete</th>
+                  <th class="py-2 px-2.5 w-[14%]">Date</th>
+                  <th class="py-2 px-2.5 w-[8%]">Type</th>
+                  <th class="py-2 px-2.5 w-[10%]">Action</th>
+                  <th class="py-2 px-2.5 text-center w-[8%]">Days</th>
+                  <th class="py-2 px-2.5 w-[32%]">Sanction / Ground</th>
+                  <th class="py-2 px-2.5 w-[20%]">Period</th>
+                  <th class="py-2 px-2.5 text-center w-[8%]">Delete</th>
                 </tr>
               </thead>
               <tbody id="leaveLedgerTableBody" class="divide-y divide-slate-200"></tbody>
