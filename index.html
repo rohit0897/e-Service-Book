@@ -587,40 +587,40 @@
           <table class="w-full text-left text-xs border-collapse">
             <thead>
               <tr class="bg-slate-100 text-slate-900 border-b-2 border-slate-300 uppercase font-black text-[11px] tracking-wider">
-                <!-- 1. Select Checkbox (3%) -->
-                <th class="w-[3%] py-2.5 px-1 text-center">
+                <!-- 1. Select Checkbox (Fixed) -->
+                <th class="w-10 min-w-[40px] py-2.5 px-1 text-center">
                   <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAllEmployees(this.checked)" class="rounded border-slate-400 text-gov-blue focus:ring-gov-blue cursor-pointer h-3.5 w-3.5" title="Select all for bulk operations">
                 </th>
 
-                <!-- 2. Emp ID (9%) -->
-                <th class="w-[9%] py-2.5 px-1.5 text-center">Emp ID</th>
+                <!-- 2. Emp ID (Fixed) -->
+                <th class="w-28 min-w-[110px] py-2.5 px-2 text-center whitespace-nowrap">Emp ID</th>
 
-                <!-- 3. Name & Contact (18%) - मुख्य जानकारी को ज्यादा जगह -->
-                <th class="w-[18%] py-2.5 px-1.5 text-left">Name & Contact</th>
+                <!-- 3. Name & Contact (Auto Flexible) -->
+                <th class="min-w-[200px] py-2.5 px-3 text-left">Name & Contact</th>
 
-                <!-- 4. DOB (8%) -->
-                <th class="w-[8%] py-2.5 px-1.5 text-center leading-tight">Date of Birth</th>
+                <!-- 4. DOB (Fixed) -->
+                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center leading-tight whitespace-nowrap">Date of Birth</th>
 
-                <!-- 5. Designation & Pay (18%) -->
-                <th class="w-[18%] py-2.5 px-1.5 text-center leading-tight">Designation & Pay</th>
+                <!-- 5. Designation & Pay (Flexible) -->
+                <th class="min-w-[170px] py-2.5 px-2 text-center leading-tight">Designation & Pay</th>
 
-                <!-- 6. Basic Pay (8%) -->
-                <th class="w-[8%] py-2.5 px-1.5 text-center">Basic Pay</th>
+                <!-- 6. Basic Pay (Fixed) -->
+                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center whitespace-nowrap">Basic Pay</th>
 
-                <!-- 7. DOR (8%) -->
-                <th class="w-[8%] py-2.5 px-1.5 text-center">DOR</th>
+                <!-- 7. DOR (Fixed) -->
+                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center whitespace-nowrap">DOR</th>
 
-                <!-- 8. Increment Due (9%) -->
-                <th class="w-[9%] py-2.5 px-1.5 text-center leading-tight">Increment Due</th>
+                <!-- 8. Increment Due (Fixed) -->
+                <th class="w-28 min-w-[115px] py-2.5 px-2 text-center leading-tight whitespace-nowrap">Increment Due</th>
 
-                <!-- 9. Leave (6%) -->
-                <th class="w-[6%] py-2.5 px-1.5 text-center">Leave</th>
+                <!-- 9. Leave Button (Fixed Width - ab chhota nahi hoga) -->
+                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center whitespace-nowrap">Leave</th>
 
-                <!-- 10. Events (5%) -->
-                <th class="w-[5%] py-2.5 px-1.5 text-center">Events</th>
+                <!-- 10. Events Button (Fixed Width - ab chhota nahi hoga) -->
+                <th class="w-24 min-w-[95px] py-2.5 px-2 text-center whitespace-nowrap">Events</th>
 
-                <!-- 11. View Dossier (8%) -->
-                <th class="w-[8%] py-2.5 px-1.5 text-center leading-tight">View Dossier</th>
+                <!-- 11. View Dossier (Fixed Width) -->
+                <th class="w-20 min-w-[75px] py-2.5 px-2 text-center leading-tight whitespace-nowrap">Dossier</th>
               </tr>
             </thead>
             <tbody id="employeeTableBody" class="divide-y divide-slate-200"></tbody>
